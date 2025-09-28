@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-type RuntimeEnv = NodeJS.ProcessEnv & {
-  NODE_ENV: string;
-};
-
 const serverSchema = z
   .object({
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
@@ -29,22 +25,21 @@ const fallbackForTests = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
 };
 
-const processEnv = process.env as RuntimeEnv & Record<string, string | undefined>;
-const isTestEnv = processEnv.NODE_ENV === "test";
-
 const runtimeEnv = {
-  NEXT_PUBLIC_SUPABASE_URL: isTestEnv
-    ? fallbackForTests.NEXT_PUBLIC_SUPABASE_URL
-    : processEnv.NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: isTestEnv
-    ? fallbackForTests.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    : processEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  SUPABASE_SERVICE_ROLE_KEY: processEnv.SUPABASE_SERVICE_ROLE_KEY,
-  SUPABASE_PROJECT_REF: processEnv.SUPABASE_PROJECT_REF,
-  DISCORD_WEBHOOK_URL: processEnv.DISCORD_WEBHOOK_URL,
-  AUTH0_DOMAIN: processEnv.AUTH0_DOMAIN,
-  AUTH0_CLIENT_ID: processEnv.AUTH0_CLIENT_ID,
-  AUTH0_CLIENT_SECRET: processEnv.AUTH0_CLIENT_SECRET,
+  NEXT_PUBLIC_SUPABASE_URL:
+    typeof process !== "undefined"
+      ? process.env.NEXT_PUBLIC_SUPABASE_URL
+      : fallbackForTests.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY:
+    typeof process !== "undefined"
+      ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      : fallbackForTests.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  SUPABASE_SERVICE_ROLE_KEY: typeof process !== "undefined" ? process.env.SUPABASE_SERVICE_ROLE_KEY : undefined,
+  SUPABASE_PROJECT_REF: typeof process !== "undefined" ? process.env.SUPABASE_PROJECT_REF : undefined,
+  DISCORD_WEBHOOK_URL: typeof process !== "undefined" ? process.env.DISCORD_WEBHOOK_URL : undefined,
+  AUTH0_DOMAIN: typeof process !== "undefined" ? process.env.AUTH0_DOMAIN : undefined,
+  AUTH0_CLIENT_ID: typeof process !== "undefined" ? process.env.AUTH0_CLIENT_ID : undefined,
+  AUTH0_CLIENT_SECRET: typeof process !== "undefined" ? process.env.AUTH0_CLIENT_SECRET : undefined,
 } satisfies Record<string, string | undefined>;
 
 const parsed = serverSchema.safeParse(runtimeEnv);
