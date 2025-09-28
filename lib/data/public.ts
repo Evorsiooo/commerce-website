@@ -1,7 +1,7 @@
 import { cache } from "react";
 
 import type { Database } from "@/db/types/supabase";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getPublicSupabaseClient } from "@/lib/supabase/public";
 
 export type PublicBusiness = Pick<
   Database["public"]["Tables"]["businesses"]["Row"],
@@ -39,7 +39,7 @@ export type PublishedRegulation = Pick<
 >;
 
 export const getPublicBusinesses = cache(async (): Promise<PublicBusiness[]> => {
-  const supabase = createServerSupabaseClient();
+  const supabase = getPublicSupabaseClient();
   const { data, error } = await supabase
     .from("businesses")
     .select(
@@ -56,7 +56,7 @@ export const getPublicBusinesses = cache(async (): Promise<PublicBusiness[]> => 
 });
 
 export const getPublicProperties = cache(async (): Promise<PublicProperty[]> => {
-  const supabase = createServerSupabaseClient();
+  const supabase = getPublicSupabaseClient();
   const { data, error } = await supabase
     .from("properties")
     .select("id, name, address, status, photo_storage_path, updated_at")
@@ -72,7 +72,7 @@ export const getPublicProperties = cache(async (): Promise<PublicProperty[]> => 
 });
 
 export const getPublishedRegulations = cache(async (): Promise<PublishedRegulation[]> => {
-  const supabase = createServerSupabaseClient();
+  const supabase = getPublicSupabaseClient();
   const { data, error } = await supabase
     .from("regulations")
     .select(
