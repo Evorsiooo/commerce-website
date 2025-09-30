@@ -13,10 +13,7 @@ export const metadata: Metadata = {
 };
 
 type BusinessDirectoryPageProps = {
-  searchParams?: {
-    status?: string;
-    sort?: string;
-  };
+  searchParams?: Promise<Record<string, string | string[]>>;
 };
 
 const STATUS_OPTIONS = [
@@ -36,9 +33,10 @@ type SortValue = (typeof SORT_OPTIONS)[number]["value"];
 
 export default async function BusinessDirectoryPage({ searchParams }: BusinessDirectoryPageProps) {
   const businesses = await getPublicBusinesses();
+  const params = await searchParams;
 
-  const statusFilter = normalizeStatusFilter(searchParams?.status);
-  const sortOption = normalizeSortOption(searchParams?.sort);
+  const statusFilter = normalizeStatusFilter(getSingleParam(params?.status));
+  const sortOption = normalizeSortOption(getSingleParam(params?.sort));
 
   const filtered = businesses.filter((business) => {
     if (statusFilter === "all") {
@@ -262,6 +260,13 @@ function BusinessLogo({ path, name }: { path: string | null; name: string }) {
       />
     </div>
   );
+}
+
+function getSingleParam(input: string | string[] | undefined): string | undefined {
+  if (Array.isArray(input)) {
+    return input[0];
+  }
+  return input;
 }
 
 function buildPublicStorageUrl(path: string): string | null {
