@@ -41,6 +41,8 @@ export type PublishedRegulation = Pick<
   | "subcategory"
 >;
 
+type LegacyPublishedRegulation = Omit<PublishedRegulation, "category" | "subcategory">;
+
 export const getPublicBusinesses = cache(async (): Promise<PublicBusiness[]> => {
   const supabase = getPublicSupabaseClient();
   const { data, error } = await supabase
@@ -75,23 +77,52 @@ export const getPublicProperties = cache(async (): Promise<PublicProperty[]> => 
 
 export const getPublishedRegulations = cache(async (): Promise<PublishedRegulation[]> => {
   const supabase = getPublicSupabaseClient();
+
+  const selectWithCategories =
+    "id, slug, title, summary, body_markdown, effective_at, published_at, tags, category, subcategory";
+
   const { data, error } = await supabase
     .from("regulations")
-    .select(
-      "id, slug, title, summary, body_markdown, effective_at, published_at, tags, category, subcategory",
-    )
+    .select(selectWithCategories)
     .eq("status", "published")
     .order("effective_at", { ascending: false, nullsFirst: false })
     .order("published_at", { ascending: false });
 
-  if (error) {
+  if (!error) {
+    const rows = ((data ?? []) as PublishedRegulation[]);
+    return rows.map((item) => ({
+      ...item,
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      category: item.category ?? "General",
+      subcategory: item.subcategory ?? "General",
+    }));
+  }
+
+  const isMissingColumnError =
+    error.code === "42703" || /column .*category.* does not exist/i.test(error.message);
+
+  if (!isMissingColumnError) {
     throw new Error(`Failed to load regulations: ${error.message}`);
   }
 
-  return (data ?? []).map((item) => ({
+  const fallbackSelect =
+    "id, slug, title, summary, body_markdown, effective_at, published_at, tags";
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from("regulations")
+    .select(fallbackSelect)
+    .eq("status", "published")
+    .order("effective_at", { ascending: false, nullsFirst: false })
+    .order("published_at", { ascending: false });
+
+  if (fallbackError) {
+    throw new Error(`Failed to load regulations: ${fallbackError.message}`);
+  }
+
+  const legacyRows = ((fallbackData ?? []) as LegacyPublishedRegulation[]);
+  return legacyRows.map((item) => ({
     ...item,
     tags: Array.isArray(item.tags) ? item.tags : [],
-    category: item.category ?? "General",
-    subcategory: item.subcategory ?? "General",
+    category: "General",
+    subcategory: "General",
   }));
 });
