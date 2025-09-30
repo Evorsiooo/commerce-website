@@ -8,7 +8,7 @@ import { getBrowserSupabaseClient } from "@/lib/supabase/client";
 
 const providers = [
   { id: "discord" as const, label: "Sign in with Discord" },
-  { id: "auth0" as const, label: "Sign in with Roblox (Auth0)" },
+  { id: "auth0" as const, label: "Sign in with Roblox" },
 ];
 
 type ProviderId = (typeof providers)[number]["id"];
@@ -76,7 +76,7 @@ function LoginPageContent() {
       </div>
 
       <p className="rounded-lg bg-neutral-50 p-4 text-xs text-neutral-600">
-        You&apos;ll be redirected back here after authentication. If Roblox linking fails, confirm the Auth0 connection name matches the Supabase provider ID <code>auth0</code>.
+        You&apos;ll be redirected back here after authentication. If Roblox sign-in fails, confirm the Supabase OAuth provider is configured correctly in your project settings.
       </p>
 
       {error ? (

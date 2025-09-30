@@ -19,10 +19,7 @@ export default function Home() {
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild>
-            <Link href="/auth/login">Sign in with Discord</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/auth/link-accounts">Link Roblox account</Link>
+            <Link href="/auth/login">Sign In</Link>
           </Button>
         </div>
       </div>

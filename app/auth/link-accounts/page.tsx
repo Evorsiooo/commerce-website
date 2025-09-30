@@ -141,7 +141,7 @@ export default function LinkAccountsPage() {
       ) : null}
 
       <p className="text-xs text-neutral-500">
-        Having trouble? Verify the Auth0 → Supabase connection returns provider ID <code>auth0</code>. See the setup guide for callback URLs.
+        Having trouble? Verify the Roblox OAuth provider in Supabase is enabled and that callback URLs in the portal match your deployment.
       </p>
     </section>
   );

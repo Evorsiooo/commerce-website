@@ -31,7 +31,7 @@ const navLinks = [
   { href: "/properties", label: "Properties" },
   { href: "/tipline", label: "Tipline" },
   { href: "/profile", label: "Profile" },
-  { href: "/auth/link-accounts", label: "Link Accounts" },
+  { href: "/auth/login", label: "Sign In" },
 ];
 
 export default function RootLayout({

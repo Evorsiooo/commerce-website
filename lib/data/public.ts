@@ -86,5 +86,8 @@ export const getPublishedRegulations = cache(async (): Promise<PublishedRegulati
     throw new Error(`Failed to load regulations: ${error.message}`);
   }
 
-  return data ?? [];
+  return (data ?? []).map((item) => ({
+    ...item,
+    tags: Array.isArray(item.tags) ? item.tags : [],
+  }));
 });
