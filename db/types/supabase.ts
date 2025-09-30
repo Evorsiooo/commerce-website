@@ -365,6 +365,7 @@ export type Database = {
         Row: {
           body_markdown: string
           created_at: string
+          category: string
           effective_at: string | null
           id: string
           published_at: string | null
@@ -374,10 +375,12 @@ export type Database = {
           tags: string[]
           title: string
           updated_at: string
+          subcategory: string
         }
         Insert: {
           body_markdown: string
           created_at?: string
+          category?: string
           effective_at?: string | null
           id?: string
           published_at?: string | null
@@ -387,10 +390,12 @@ export type Database = {
           tags?: string[]
           title: string
           updated_at?: string
+          subcategory?: string
         }
         Update: {
           body_markdown?: string
           created_at?: string
+          category?: string
           effective_at?: string | null
           id?: string
           published_at?: string | null
@@ -400,6 +405,7 @@ export type Database = {
           tags?: string[]
           title?: string
           updated_at?: string
+          subcategory?: string
         }
         Relationships: []
       }

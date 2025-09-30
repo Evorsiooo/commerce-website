@@ -19,7 +19,9 @@ export default function Home() {
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild>
-            <Link href="/auth/login">Sign In</Link>
+            <Link href="/auth/login" className="text-white">
+              Sign In
+            </Link>
           </Button>
         </div>
       </div>

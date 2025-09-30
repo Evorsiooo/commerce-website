@@ -37,6 +37,8 @@ export type PublishedRegulation = Pick<
   | "effective_at"
   | "published_at"
   | "tags"
+  | "category"
+  | "subcategory"
 >;
 
 export const getPublicBusinesses = cache(async (): Promise<PublicBusiness[]> => {
@@ -76,7 +78,7 @@ export const getPublishedRegulations = cache(async (): Promise<PublishedRegulati
   const { data, error } = await supabase
     .from("regulations")
     .select(
-      "id, slug, title, summary, body_markdown, effective_at, published_at, tags",
+      "id, slug, title, summary, body_markdown, effective_at, published_at, tags, category, subcategory",
     )
     .eq("status", "published")
     .order("effective_at", { ascending: false, nullsFirst: false })
@@ -89,5 +91,7 @@ export const getPublishedRegulations = cache(async (): Promise<PublishedRegulati
   return (data ?? []).map((item) => ({
     ...item,
     tags: Array.isArray(item.tags) ? item.tags : [],
+    category: item.category ?? "General",
+    subcategory: item.subcategory ?? "General",
   }));
 });

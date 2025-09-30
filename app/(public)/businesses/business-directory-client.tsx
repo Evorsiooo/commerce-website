@@ -9,6 +9,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { PublicBusiness } from "@/lib/data/public";
 import { cn, formatBusinessType, humanizeEnum } from "@/lib/utils";
 import { Button } from "@/ui/button";
+import { PillToggleGroup } from "@/ui/pill-toggle-group";
 
 import {
   SORT_OPTIONS,
@@ -99,13 +100,22 @@ export function BusinessDirectoryClient({
         </p>
       </header>
 
-      <DirectoryFilters
-        status={status}
-        sort={sort}
-        onStatusChange={handleStatusChange}
-        onSortChange={handleSortChange}
-        disabled={isPending}
-      />
+      <div className="flex flex-col gap-4">
+        <PillToggleGroup
+          label="Status"
+          value={status}
+          onChange={handleStatusChange}
+          options={STATUS_OPTIONS}
+          disabled={isPending}
+        />
+        <PillToggleGroup
+          label="Sort by"
+          value={sort}
+          onChange={handleSortChange}
+          options={SORT_OPTIONS}
+          disabled={isPending}
+        />
+      </div>
 
       {businessesToRender.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-sm text-neutral-600">
@@ -168,59 +178,6 @@ export function BusinessDirectoryClient({
         </div>
       )}
     </section>
-  );
-}
-
-type DirectoryFiltersProps = {
-  status: StatusValue;
-  sort: SortValue;
-  onStatusChange: (value: StatusValue) => void;
-  onSortChange: (value: SortValue) => void;
-  disabled: boolean;
-};
-
-function DirectoryFilters({ status, sort, onStatusChange, onSortChange, disabled }: DirectoryFiltersProps) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-center gap-2">
-        {STATUS_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onStatusChange(option.value)}
-            disabled={disabled}
-            className={cn(
-              "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide transition",
-              status === option.value
-                ? "border-neutral-900 bg-neutral-900 text-white"
-                : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-400",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-neutral-500">Sort by</span>
-        {SORT_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onSortChange(option.value)}
-            disabled={disabled}
-            className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wide transition",
-              sort === option.value
-                ? "border-neutral-900 bg-neutral-900 text-white"
-                : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-400",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-    </div>
   );
 }
 
