@@ -11,9 +11,10 @@ export type PublicBusiness = Pick<
   | "status"
   | "purpose"
   | "discord_url"
-  | "employee_db_url"
   | "type"
   | "updated_at"
+  | "logo_storage_path"
+  | "governance_json"
 >;
 
 export type PublicProperty = Pick<
@@ -43,9 +44,8 @@ export const getPublicBusinesses = cache(async (): Promise<PublicBusiness[]> => 
   const { data, error } = await supabase
     .from("businesses")
     .select(
-      "id, name, industry, status, purpose, discord_url, employee_db_url, type, updated_at",
+      "id, name, industry, status, purpose, discord_url, type, updated_at, logo_storage_path, governance_json",
     )
-    .eq("status", "active")
     .order("name");
 
   if (error) {

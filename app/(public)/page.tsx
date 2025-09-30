@@ -8,7 +8,7 @@ export default function Home() {
       <div className="flex flex-col gap-6 rounded-3xl border border-neutral-200 bg-white p-8 shadow-sm">
         <div className="flex flex-col gap-2">
           <span className="text-xs uppercase tracking-widest text-neutral-500">
-            Roblox Ro-State Commerce Office
+            Harrison County Executive Commerce Office
           </span>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             A single home for businesses, permits, and compliance.
@@ -23,9 +23,6 @@ export default function Home() {
           </Button>
           <Button asChild variant="outline">
             <Link href="/auth/link-accounts">Link Roblox account</Link>
-          </Button>
-          <Button asChild variant="ghost">
-            <Link href="/tipline">Submit a tip</Link>
           </Button>
         </div>
       </div>

@@ -30,3 +30,17 @@ export function humanizeEnum(value: string) {
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
 }
+
+const BUSINESS_TYPE_LABELS: Record<string, string> = {
+  corporation: "Corporation",
+  llc: "LLC",
+  gp: "General Partnership",
+  lp: "Limited Partnership",
+  llp: "LLP",
+  sole_prop: "Sole Proprietorship",
+  nonprofit_corp: "Nonprofit Corporation",
+};
+
+export function formatBusinessType(value: string) {
+  return BUSINESS_TYPE_LABELS[value] ?? humanizeEnum(value);
+}
