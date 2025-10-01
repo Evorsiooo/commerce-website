@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/ui/button";
 import { getBrowserSupabaseClient } from "@/lib/supabase/client";
 import { needsLinking } from "@/lib/auth/linking";
+import { extractAuthErrorMessage, isSupabaseUserMissingError } from "@/lib/auth/errors";
 
 const providers = [
   { id: "discord" as const, label: "Sign in with Discord" },
@@ -31,7 +32,18 @@ function LoginPageContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
+    void supabase.auth.getSession().then(async ({ data, error }) => {
+      if (isSupabaseUserMissingError(error)) {
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (error) {
+        console.error("Failed to load session", error);
+        setError(extractAuthErrorMessage(error));
+        return;
+      }
+
       const session = data.session;
       if (!session) {
         return;
@@ -65,13 +77,16 @@ function LoginPageContent() {
         provider,
         options: {
           redirectTo: url.toString(),
-          scopes: "identify guilds",
+          scopes: "identify",
+          queryParams: {
+            scope: "identify",
+          },
         },
       });
 
       if (error) {
         console.error(error);
-        setError(error.message);
+        setError(extractAuthErrorMessage(error));
         setLoading(null);
       }
     },

@@ -25,12 +25,24 @@ export function getAuth0Config() {
     throw new Error("Auth0 environment variables are not fully configured.");
   }
 
+  const normalizedDomain = normalizeAuth0Domain(domain);
+
   return {
-    domain: domain.replace(/\/$/, ""),
+    domain: normalizedDomain,
     clientId,
     clientSecret,
     audience: audience?.trim() ?? undefined,
   };
+}
+
+function normalizeAuth0Domain(rawDomain: string) {
+  const trimmed = rawDomain.trim().replace(/\/$/, "");
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
 }
 
 export function createCodeVerifier() {

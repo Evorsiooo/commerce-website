@@ -21,7 +21,11 @@ export function resolveLinkedProviders(user: User | null): ProviderLinkState {
 }
 
 export function needsLinking(session: Session | null): boolean {
-  const state = resolveLinkedProviders(session?.user ?? null);
+  if (!session?.user) {
+    return false;
+  }
+
+  const state = resolveLinkedProviders(session.user);
   return REQUIRED_PROVIDERS.some((provider) => !state[provider]);
 }
 

@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { extractAuthErrorMessage, isSupabaseUserMissingError } from "@/lib/auth/errors";
 
 import { Button } from "@/ui/button";
 import { getBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -30,6 +31,9 @@ const initialState: FetchState = {
   error: null,
 };
 
+type BrowserSupabaseClient = ReturnType<typeof getBrowserSupabaseClient>;
+type AppRouterInstance = ReturnType<typeof useRouter>;
+
 export default function LinkAccountsPage() {
   return (
     <Suspense fallback={<LinkAccountsFallback />}>
@@ -48,13 +52,18 @@ function LinkAccountsContent() {
 
   useEffect(() => {
     void supabase.auth.getSession().then(async ({ data, error }) => {
+      if (isSupabaseUserMissingError(error)) {
+        await handleMissingUser(supabase, router, redirectTarget);
+        return;
+      }
+
       if (error) {
-        setState((current) => ({ ...current, status: "ready", error: error.message }));
+        setState((current) => ({ ...current, status: "ready", error: extractAuthErrorMessage(error) }));
         return;
       }
 
       if (!data.session) {
-        router.replace(`/auth/login?redirect=${encodeURIComponent("/auth/link-accounts")}`);
+        await handleMissingUser(supabase, router, redirectTarget);
         return;
       }
 
@@ -67,7 +76,7 @@ function LinkAccountsContent() {
         router.replace("/profile");
       }
     });
-  }, [router, supabase]);
+  }, [redirectTarget, router, supabase]);
 
   const handleLink = async (provider: ProviderId) => {
     setLinking(provider);
@@ -87,12 +96,21 @@ function LinkAccountsContent() {
       provider: provider as "discord",
       options: {
         redirectTo: url.toString(),
+        scopes: "identify",
+        queryParams: {
+          scope: "identify",
+        },
       },
     });
 
+    if (isSupabaseUserMissingError(error)) {
+      await handleMissingUser(supabase, router, redirectTarget);
+      return;
+    }
+
     if (error) {
       console.error(error);
-      setState((current) => ({ ...current, error: error.message }));
+      setState((current) => ({ ...current, error: extractAuthErrorMessage(error) }));
       setLinking(null);
       return;
     }
@@ -191,4 +209,14 @@ function LinkAccountsFallback() {
       </div>
     </section>
   );
+}
+
+async function handleMissingUser(supabase: BrowserSupabaseClient, router: AppRouterInstance, redirect: string) {
+  try {
+    await supabase.auth.signOut();
+  } catch (signOutError) {
+    console.error("Failed to sign out after missing user", signOutError);
+  }
+
+  router.replace(`/auth/login?redirect=${encodeURIComponent(redirect || "/profile")}`);
 }
