@@ -59,8 +59,13 @@ export async function GET(request: Request) {
     authorizeUrl.searchParams.set("audience", config.audience);
   }
 
-  const prompt = intent === "link" ? "login" : "select_account";
-  authorizeUrl.searchParams.set("prompt", prompt);
+  if (config.connection) {
+    authorizeUrl.searchParams.set("connection", config.connection);
+  }
+
+  if (intent === "link") {
+    authorizeUrl.searchParams.set("prompt", "login");
+  }
 
   const sessionPayload = encodePkceSession({
     state,

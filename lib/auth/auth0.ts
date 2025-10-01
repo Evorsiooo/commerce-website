@@ -20,6 +20,7 @@ export function getAuth0Config() {
   const clientId = env.AUTH0_CLIENT_ID;
   const clientSecret = env.AUTH0_CLIENT_SECRET;
   const audience = env.AUTH0_AUDIENCE;
+  const connection = env.AUTH0_CONNECTION;
 
   if (!domain || !clientId || !clientSecret) {
     throw new Error("Auth0 environment variables are not fully configured.");
@@ -32,6 +33,7 @@ export function getAuth0Config() {
     clientId,
     clientSecret,
     audience: audience?.trim() ?? undefined,
+    connection: connection?.trim() ?? undefined,
   };
 }
 
