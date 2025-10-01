@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useCallback, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/ui/button";
 import { getBrowserSupabaseClient } from "@/lib/supabase/client";
+import { needsLinking } from "@/lib/auth/linking";
 
 const providers = [
   { id: "discord" as const, label: "Sign in with Discord" },
@@ -24,14 +25,31 @@ export default function LoginPage() {
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const destination = searchParams.get("redirect") ?? "/profile";
+  const router = useRouter();
+  const supabase = useMemo(() => getBrowserSupabaseClient(), []);
   const [loading, setLoading] = useState<ProviderId | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => {
+      const session = data.session;
+      if (!session) {
+        return;
+      }
+
+      if (needsLinking(session)) {
+        router.replace(`/auth/link-accounts?redirect=${encodeURIComponent(destination)}`);
+        return;
+      }
+
+      router.replace(destination);
+    });
+  }, [destination, router, supabase]);
 
   const handleSignIn = useCallback(
     async (provider: ProviderId) => {
       setError(null);
       setLoading(provider);
-      const supabase = getBrowserSupabaseClient();
 
       const url = new URL(window.location.origin + "/auth/callback");
       url.searchParams.set("redirect", destination);
@@ -50,7 +68,7 @@ function LoginPageContent() {
         setLoading(null);
       }
     },
-    [destination],
+    [destination, supabase],
   );
 
   return (

@@ -41,7 +41,9 @@ export function DirectoryTemplate({
           <BodyText className="max-w-2xl">{intro.description}</BodyText>
         </div>
 
-        {toolbar ? <Card className="flex flex-wrap items-center gap-3">{toolbar}</Card> : null}
+        {toolbar ? (
+          <Card className="flex flex-wrap items-center gap-4 p-4">{toolbar}</Card>
+        ) : null}
 
         <div
           className={cn(

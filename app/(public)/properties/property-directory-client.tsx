@@ -1,10 +1,12 @@
 'use client';
 
+import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import directoryContent from "@/config/pages/properties-directory.json";
 import type { PublicProperty } from "@/lib/data/public";
-import { cn, formatDate, humanizeEnum } from "@/lib/utils";
+import { buildPublicStorageUrl, cn, formatDate, humanizeEnum } from "@/lib/utils";
 import { DirectoryTemplate } from "@/templates/directory-template";
 import { EmptyState } from "@/ui/empty-state";
 import { FilterBar } from "@/ui/filter-bar";
@@ -81,32 +83,101 @@ export function PropertyDirectoryClient({ properties }: PropertyDirectoryClientP
     >
       <div className="grid gap-4 md:grid-cols-2">
         {sorted.map((property) => (
-          <Card key={property.id} className="flex h-full flex-col gap-4">
-            <header className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
-                  {property.name ?? property.address ?? "Unlisted property"}
-                </h2>
-                {property.address ? (
-                  <p className="text-sm text-neutral-600">{property.address}</p>
-                ) : null}
-              </div>
-              <span
-                className={cn(
-                  "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide",
-                  statusPalette[property.status] ?? "bg-neutral-100 text-neutral-600",
-                )}
-              >
-                {humanizeEnum(property.status)}
-              </span>
-            </header>
+          <Card key={property.id} className="flex h-full flex-col overflow-hidden p-0">
+            <PropertyImage
+              path={property.photo_storage_path}
+              name={property.name ?? property.address ?? "Property photo"}
+            />
 
-            <p className="text-xs text-neutral-500">
-              Last updated {formatDate(property.updated_at)}
-            </p>
+            <div className="flex flex-1 flex-col gap-4 p-6">
+              <header className="flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
+                      {property.name ?? property.address ?? "Unlisted property"}
+                    </h2>
+                    {property.address ? (
+                      <p className="text-sm text-neutral-600">{property.address}</p>
+                    ) : null}
+                  </div>
+                  <span
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide",
+                      statusPalette[property.status] ?? "bg-neutral-100 text-neutral-600",
+                    )}
+                  >
+                    {humanizeEnum(property.status)}
+                  </span>
+                </div>
+
+                <CurrentBusinessSection property={property} />
+              </header>
+
+              <p className="text-xs text-neutral-500">
+                Last updated {formatDate(property.updated_at)}
+              </p>
+            </div>
           </Card>
         ))}
       </div>
     </DirectoryTemplate>
+  );
+}
+
+type PropertyImageProps = {
+  path: string | null;
+  name: string | null;
+};
+
+function PropertyImage({ path, name }: PropertyImageProps) {
+  const publicUrl = buildPublicStorageUrl(path);
+
+  if (!publicUrl) {
+    return (
+      <div className="flex h-40 w-full items-center justify-center bg-neutral-100 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        Photo coming soon
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative h-40 w-full">
+      <Image
+        src={publicUrl}
+        alt={name ?? "Property photo"}
+        fill
+        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+        className="object-cover"
+      />
+    </div>
+  );
+}
+
+function CurrentBusinessSection({ property }: { property: PublicProperty }) {
+  const owner = property.current_business;
+
+  if (!owner) {
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          Current Business
+        </span>
+        <span className="text-sm text-neutral-500">Unassigned</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        Current Business
+      </span>
+      <Link
+        href={`/businesses/${owner.id}`}
+        className="text-sm font-medium text-neutral-900 underline-offset-4 hover:underline"
+      >
+        {owner.name}
+      </Link>
+    </div>
   );
 }

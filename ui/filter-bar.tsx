@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { Card } from "@/ui/surface";
 import { Eyebrow } from "@/ui/typography";
 
 type FilterBarProps = {
@@ -14,9 +13,9 @@ type FilterBarProps = {
 
 export function FilterBar({ label, children, className }: FilterBarProps) {
   return (
-    <Card className={cn("flex flex-wrap items-center gap-3", className)}>
-      {label ? <Eyebrow as="span">{label}</Eyebrow> : null}
-      {children}
-    </Card>
+    <div className={cn("flex flex-wrap items-center gap-3", className)}>
+      {label ? <Eyebrow as="span" className="shrink-0">{label}</Eyebrow> : null}
+      <div className="flex flex-wrap items-center gap-2">{children}</div>
+    </div>
   );
 }

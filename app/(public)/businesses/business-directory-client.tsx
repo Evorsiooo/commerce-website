@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import directoryContent from "@/config/pages/businesses-directory.json";
 import type { PublicBusiness } from "@/lib/data/public";
-import { cn, formatBusinessType, humanizeEnum } from "@/lib/utils";
+import { buildPublicStorageUrl, cn, formatBusinessType, humanizeEnum } from "@/lib/utils";
 import { DirectoryTemplate } from "@/templates/directory-template";
 import { EmptyState } from "@/ui/empty-state";
 import { FilterBar } from "@/ui/filter-bar";
@@ -221,15 +221,6 @@ function BusinessLogo({ path, name }: { path: string | null; name: string }) {
       <Image src={publicUrl} alt={`${name} logo`} fill sizes="64px" className="object-cover" />
     </div>
   );
-}
-
-function buildPublicStorageUrl(path: string): string | null {
-  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!baseUrl) {
-    return null;
-  }
-
-  return `${baseUrl.replace(/\/$/, "")}/storage/v1/object/public/${path}`;
 }
 
 function extractOwnerName(governance: unknown) {

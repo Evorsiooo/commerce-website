@@ -44,3 +44,18 @@ const BUSINESS_TYPE_LABELS: Record<string, string> = {
 export function formatBusinessType(value: string) {
   return BUSINESS_TYPE_LABELS[value] ?? humanizeEnum(value);
 }
+
+export function buildPublicStorageUrl(path: string | null | undefined) {
+  if (!path) {
+    return null;
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!baseUrl) {
+    return null;
+  }
+
+  const normalizedBase = baseUrl.replace(/\/?$/, "");
+  const normalizedPath = path.replace(/^\//, "");
+  return `${normalizedBase}/storage/v1/object/public/${normalizedPath}`;
+}

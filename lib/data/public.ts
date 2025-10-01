@@ -25,7 +25,13 @@ export type PublicProperty = Pick<
   | "status"
   | "photo_storage_path"
   | "updated_at"
->;
+  | "current_business_id"
+> & {
+  current_business: Pick<
+    Database["public"]["Tables"]["businesses"]["Row"],
+    "id" | "name" | "logo_storage_path" | "status"
+  > | null;
+};
 
 export type PublishedRegulation = Pick<
   Database["public"]["Tables"]["regulations"]["Row"],
@@ -63,7 +69,21 @@ export const getPublicProperties = cache(async (): Promise<PublicProperty[]> => 
   const supabase = getPublicSupabaseClient();
   const { data, error } = await supabase
     .from("properties")
-    .select("id, name, address, status, photo_storage_path, updated_at")
+    .select(`
+      id,
+      name,
+      address,
+      status,
+      photo_storage_path,
+      updated_at,
+      current_business_id,
+      current_business:businesses!properties_current_business_id_fkey (
+        id,
+        name,
+        logo_storage_path,
+        status
+      )
+    `)
     .in("status", ["available", "pending"])
     .order("status")
     .order("updated_at", { ascending: false });
@@ -72,7 +92,10 @@ export const getPublicProperties = cache(async (): Promise<PublicProperty[]> => 
     throw new Error(`Failed to load properties: ${error.message}`);
   }
 
-  return data ?? [];
+  return (data ?? []).map((item) => ({
+    ...item,
+    current_business: (item as PublicProperty).current_business ?? null,
+  }));
 });
 
 export const getPublishedRegulations = cache(async (): Promise<PublishedRegulation[]> => {
