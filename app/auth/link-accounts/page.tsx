@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/ui/button";
 import { getBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -32,9 +32,11 @@ const initialState: FetchState = {
 
 export default function LinkAccountsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = useMemo(() => getBrowserSupabaseClient(), []);
   const [state, setState] = useState(initialState);
   const [linking, setLinking] = useState<ProviderId | null>(null);
+  const redirectTarget = searchParams.get("redirect") ?? "/profile";
 
   useEffect(() => {
     void supabase.auth.getSession().then(async ({ data, error }) => {
@@ -61,6 +63,15 @@ export default function LinkAccountsPage() {
 
   const handleLink = async (provider: ProviderId) => {
     setLinking(provider);
+
+    if (provider === "auth0") {
+      const startUrl = new URL("/api/auth/auth0/start", window.location.origin);
+      startUrl.searchParams.set("redirect", redirectTarget);
+      startUrl.searchParams.set("intent", "link");
+      window.location.href = startUrl.toString();
+      return;
+    }
+
     const url = new URL(window.location.origin + "/auth/callback");
     url.searchParams.set("redirect", "/auth/link-accounts");
 

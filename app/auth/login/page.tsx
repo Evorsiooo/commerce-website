@@ -51,14 +51,21 @@ function LoginPageContent() {
       setError(null);
       setLoading(provider);
 
+      if (provider === "auth0") {
+        const startUrl = new URL("/api/auth/auth0/start", window.location.origin);
+        startUrl.searchParams.set("redirect", destination);
+        window.location.href = startUrl.toString();
+        return;
+      }
+
       const url = new URL(window.location.origin + "/auth/callback");
       url.searchParams.set("redirect", destination);
 
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: provider as "discord",
+        provider,
         options: {
           redirectTo: url.toString(),
-          scopes: provider === "discord" ? "identify guilds" : undefined,
+          scopes: "identify guilds",
         },
       });
 
