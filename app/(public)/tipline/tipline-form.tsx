@@ -77,11 +77,7 @@ export function TiplineForm() {
   });
 
   return (
-    <form
-      className="flex flex-col gap-6 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
-      onSubmit={onSubmit}
-      noValidate
-    >
+    <form className="flex flex-col gap-6" onSubmit={onSubmit} noValidate>
       <div className="grid gap-4">
         <label className="flex flex-col gap-2 text-sm font-medium text-neutral-800">
           Business or Location (optional)

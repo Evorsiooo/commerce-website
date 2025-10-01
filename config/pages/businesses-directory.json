@@ -1,0 +1,11 @@
+{
+  "intro": {
+    "eyebrow": "Public Directory",
+    "heading": "Business Directory",
+    "description": "Browse the organizations licensed to operate within Harrison County. Filter by status or sort to quickly find the entity you're investigating."
+  },
+  "empty": {
+    "title": "No businesses found",
+    "description": "Adjust your filters or check back later for newly approved entities."
+  }
+}

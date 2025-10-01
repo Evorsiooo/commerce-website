@@ -1,0 +1,11 @@
+{
+  "intro": {
+    "eyebrow": "Regulations & Guidance",
+    "heading": "Published Regulations",
+    "description": "The compliance team maintains this catalogue to keep businesses informed. Entries are listed by effective date, and new material is highlighted automatically."
+  },
+  "empty": {
+    "title": "No regulations published",
+    "description": "Once a compliance admin publishes entries, they will appear here immediately."
+  }
+}

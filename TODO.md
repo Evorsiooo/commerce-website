@@ -13,6 +13,13 @@ These TODOs mirror the master plan and give us a quick checklist for implementat
 - [x] Public Business Directory and Property Directory read views (approved data only)
 - [x] Tipline submission form (public) implemented
 
+## Phase 2.5 — Framework & Auth Stabilization
+- [ ] Replace bespoke page markup with `PageShell`/template system (Landing, Directory, Form, Utility)
+- [ ] Build shared content modules (`PageHeading`, `FilterBar`, `DirectoryCard`, `EmptyState`, `MarkdownArticle`)
+- [ ] Re-platform Home, Regulations, Businesses, Properties, Tipline to use new templates and shared modules
+- [ ] Harden dual-provider auth flow (account status enum, link gate, navbar visibility, abandoned account cleanup)
+- [ ] Publish template & auth lifecycle docs (`docs/PHASE2_5_FRAMEWORK_PLAN.md`, per-template guides, README/master_plan updates)
+
 ## Phase 3 — Business Onboarding & Self-Service
 - [ ] Business formation wizard + Business License form built with React Hook Form + Zod
 - [ ] Governance builder implemented and stored on submission

@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 
+import directoryContent from "@/config/pages/businesses-directory.json";
 import { getPublicBusinesses } from "@/lib/data/public";
 import { BusinessDirectoryClient } from "./business-directory-client";
 import { normalizeSort, normalizeStatus } from "./options";
 
 export const metadata: Metadata = {
   title: "Business Directory | Commerce Office Portal",
-  description: "Browse registered businesses operating across Harrison County.",
+  description: directoryContent.intro.description,
 };
 
 type BusinessDirectoryPageProps = {

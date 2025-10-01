@@ -341,6 +341,15 @@ This document is the **single source of truth** for scope, architecture, schema,
 
 **Acceptance:** Public visitors can browse directories and submit a tipline report; unauthenticated actions respect RLS/public views.
 
+### Phase 2.5 — Framework & Auth Stabilization
+- Replace ad-hoc public pages with the shared template system (`PageShell`, Landing/Directory/Form/Utility templates) described in [docs/PHASE2_5_FRAMEWORK_PLAN.md](./docs/PHASE2_5_FRAMEWORK_PLAN.md).
+- Build shared UI modules (`PageHeading`, `FilterBar`, `DirectoryCard`, `EmptyState`, `MarkdownArticle`) and document usage under `docs/templates/`.
+- Rebuild Home, Regulations, Business Directory, Property Directory, and Tipline to consume the new templates and modules.
+- Introduce `profiles.account_status`, enforce dual-provider linking gates, hide profile navigation until authenticated, and schedule cleanup for abandoned accounts.
+- Update README, template docs, and QA checklist to reflect the new framework baseline before continuing to Phase 3 work.
+
+**Acceptance:** All public routes render through the template library with consistent styling, the dual-provider login flow is mandatory before accessing authenticated surfaces, and documentation clearly prescribes how to extend the system.
+
 ### Phase 3 — Business Onboarding & Self-Service
 - Build Business License application wizard with React Hook Form + Zod validation.
 - Implement governance builder (domain-pure function) and attach governance_json on insert.

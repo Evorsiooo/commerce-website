@@ -2,14 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState, useTransition } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import directoryContent from "@/config/pages/businesses-directory.json";
 import type { PublicBusiness } from "@/lib/data/public";
 import { cn, formatBusinessType, humanizeEnum } from "@/lib/utils";
-import { Button } from "@/ui/button";
+import { DirectoryTemplate } from "@/templates/directory-template";
+import { EmptyState } from "@/ui/empty-state";
+import { FilterBar } from "@/ui/filter-bar";
 import { PillToggleGroup } from "@/ui/pill-toggle-group";
+import { Card } from "@/ui/surface";
+import { Button } from "@/ui/button";
 
 import {
   SORT_OPTIONS,
@@ -88,96 +92,85 @@ export function BusinessDirectoryClient({
   };
 
   return (
-    <section className="flex flex-1 flex-col gap-8">
-      <header className="flex flex-col gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-          Public Directory
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Business Directory</h1>
-        <p className="max-w-2xl text-sm text-neutral-600">
-          Browse the organizations licensed to operate within Harrison County. Filter by status or
-          sort to quickly find the entity you&apos;re investigating.
-        </p>
-      </header>
-
-      <div className="flex flex-col gap-4">
-        <PillToggleGroup
-          label="Status"
-          value={status}
-          onChange={handleStatusChange}
-          options={STATUS_OPTIONS}
-          disabled={isPending}
+    <DirectoryTemplate
+      intro={directoryContent.intro}
+      toolbar={
+        <FilterBar className="gap-6">
+          <PillToggleGroup
+            label="Status"
+            value={status}
+            onChange={handleStatusChange}
+            options={STATUS_OPTIONS}
+            disabled={isPending}
+          />
+          <PillToggleGroup
+            label="Sort by"
+            value={sort}
+            onChange={handleSortChange}
+            options={SORT_OPTIONS}
+            disabled={isPending}
+          />
+        </FilterBar>
+      }
+      isEmpty={businessesToRender.length === 0}
+      emptyState={
+        <EmptyState
+          title={directoryContent.empty.title}
+          description={directoryContent.empty.description}
         />
-        <PillToggleGroup
-          label="Sort by"
-          value={sort}
-          onChange={handleSortChange}
-          options={SORT_OPTIONS}
-          disabled={isPending}
-        />
-      </div>
+      }
+    >
+      <div className="grid gap-4 md:grid-cols-2">
+        {businessesToRender.map((business) => (
+          <Card key={business.id} className="flex h-full flex-col gap-5">
+            <div className="flex items-start gap-4">
+              <BusinessLogo path={business.logo_storage_path} name={business.name} />
 
-      {businessesToRender.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-sm text-neutral-600">
-          No businesses matched your filters. Adjust the status toggle above to explore other
-          results.
-        </p>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {businessesToRender.map((business) => (
-            <article
-              key={business.id}
-              className="flex h-full flex-col gap-5 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm"
-            >
-              <div className="flex items-start gap-4">
-                <BusinessLogo path={business.logo_storage_path} name={business.name} />
-
-                <div className="flex flex-1 flex-col gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
-                      {business.name}
-                    </h2>
-                    <StatusPill status={business.status} />
-                    {business.industry ? (
-                      <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-neutral-600">
-                        {business.industry}
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="text-sm text-neutral-600">
-                    {business.purpose ?? "Business summary has not been published yet."}
-                  </p>
+              <div className="flex flex-1 flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
+                    {business.name}
+                  </h2>
+                  <StatusPill status={business.status} />
+                  {business.industry ? (
+                    <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-neutral-600">
+                      {business.industry}
+                    </span>
+                  ) : null}
                 </div>
+                <p className="text-sm text-neutral-600">
+                  {business.purpose ?? "Business summary has not been published yet."}
+                </p>
               </div>
+            </div>
 
-              <dl className="grid gap-3 text-sm text-neutral-700">
-                <Field label="Owner" value={extractOwnerName(business.governance_json)} />
-                <Field label="Entity Type" value={formatBusinessType(business.type)} />
-                <Field label="Status" value={humanizeEnum(business.status)} />
-              </dl>
+            <dl className="grid gap-3 text-sm text-neutral-700">
+              <Field label="Owner" value={extractOwnerName(business.governance_json)} />
+              <Field label="Entity Type" value={formatBusinessType(business.type)} />
+              <Field label="Status" value={humanizeEnum(business.status)} />
+            </dl>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <Button asChild variant="outline">
-                  <Link href={`/businesses/${business.id}`}>Business Page</Link>
-                </Button>
-                {business.discord_url ? (
-                  <Link
-                    href={business.discord_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm font-medium text-neutral-900 underline-offset-4 hover:underline"
-                  >
-                    Join Discord
-                  </Link>
-                ) : (
-                  <span className="text-sm text-neutral-500">Discord not provided</span>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-    </section>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button asChild variant="outline">
+                <Link href={`/businesses/${business.id}`}>Business Page</Link>
+              </Button>
+              {business.discord_url ? (
+                <Link
+                  href={business.discord_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium text-neutral-900 underline-offset-4 hover:underline"
+                >
+                  Join Discord
+                </Link>
+              ) : (
+                <span className="text-sm text-neutral-500">Discord not provided</span>
+              )}
+            </div>
+          </Card>
+        ))}
+      </div>
+    </DirectoryTemplate>
   );
 }
 

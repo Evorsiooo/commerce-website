@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 
+import directoryContent from "@/config/pages/properties-directory.json";
 import { getPublicProperties } from "@/lib/data/public";
 
 import { PropertyDirectoryClient } from "./property-directory-client";
 
 export const metadata: Metadata = {
   title: "Property Directory | Commerce Office Portal",
-  description: "Preview state-owned properties that are pending assignment or open for proposals.",
+  description: directoryContent.intro.description,
 };
 
 export default async function PropertyDirectoryPage() {

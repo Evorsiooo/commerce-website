@@ -1,0 +1,11 @@
+{
+  "intro": {
+    "eyebrow": "Public Directory",
+    "heading": "Available Properties",
+    "description": "Listings display the latest inventory that is open for proposals or currently pending review. Staff updates propagate here automatically once statuses change."
+  },
+  "empty": {
+    "title": "No properties are listed",
+    "description": "Check back soon or submit a tipline report if you believe a property should appear here."
+  }
+}

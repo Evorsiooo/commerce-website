@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "supabase:types": "supabase gen types typescript --linked --schema public > db/types/supabase.ts"
+    "supabase:types": "supabase gen types typescript --linked --schema public > db/types/supabase.ts",
+    "scaffold:page": "node ./scripts/scaffold-page.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

@@ -68,9 +68,7 @@ export default function RootLayout({
                 </nav>
               </div>
             </header>
-            <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8">
-              {children}
-            </main>
+            <main className="flex flex-1 flex-col">{children}</main>
             <footer className="border-t border-neutral-200 bg-white/80">
               <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 text-xs text-neutral-500">
                 <span>&copy; {new Date().getFullYear()} Commerce Office.</span>

@@ -1,0 +1,45 @@
+{
+  "hero": {
+    "eyebrow": "Harrison County Executive Commerce Office",
+    "heading": "A single home for businesses, permits, and compliance.",
+    "description": "This portal consolidates applications, staff reviews, tipline reports, and property assignments into a secure Supabase + Next.js stack. Phase 1 locks in our foundation so later phases can ship quickly without rewrites.",
+    "primaryCta": {
+      "label": "Sign In",
+      "href": "/auth/login"
+    }
+  },
+  "features": [
+    {
+      "title": "Regulations Library",
+      "description": "Browse the compliance catalogue maintained by staff so your business always meets the latest policies.",
+      "action": {
+        "label": "Read regulations",
+        "href": "/regulations"
+      }
+    },
+    {
+      "title": "Business Directory",
+      "description": "See which entities are in good standing and reach their community and staffing resources in one spot.",
+      "action": {
+        "label": "View businesses",
+        "href": "/businesses"
+      }
+    },
+    {
+      "title": "Property Inventory",
+      "description": "Track parcels that are available or pending assignment so proposals stay transparent and fair.",
+      "action": {
+        "label": "Explore properties",
+        "href": "/properties"
+      }
+    },
+    {
+      "title": "Compliance Tipline",
+      "description": "Share leads or concerns with the compliance bureau. Anonymous submissions are welcome.",
+      "action": {
+        "label": "Send a tip",
+        "href": "/tipline"
+      }
+    }
+  ]
+}
