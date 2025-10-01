@@ -58,7 +58,7 @@ function LoginPageContent() {
         provider: provider as "discord",
         options: {
           redirectTo: url.toString(),
-          scopes: provider === "discord" ? "identify email guilds" : undefined,
+          scopes: provider === "discord" ? "identify guilds" : undefined,
         },
       });
 
