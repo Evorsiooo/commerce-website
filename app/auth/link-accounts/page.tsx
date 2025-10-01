@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/ui/button";
@@ -31,6 +31,14 @@ const initialState: FetchState = {
 };
 
 export default function LinkAccountsPage() {
+  return (
+    <Suspense fallback={<LinkAccountsFallback />}>
+      <LinkAccountsContent />
+    </Suspense>
+  );
+}
+
+function LinkAccountsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = useMemo(() => getBrowserSupabaseClient(), []);
@@ -154,6 +162,33 @@ export default function LinkAccountsPage() {
       <p className="text-xs text-neutral-500">
         Having trouble? Verify the Roblox OAuth provider in Supabase is enabled and that callback URLs in the portal match your deployment.
       </p>
+    </section>
+  );
+}
+
+function LinkAccountsFallback() {
+  return (
+    <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold">Link your accounts</h1>
+        <p className="text-sm text-neutral-600">Preparing account status…</p>
+      </header>
+      <div className="grid gap-4 md:grid-cols-2">
+        {REQUIRED_PROVIDERS.map((provider) => (
+          <article
+            key={provider}
+            className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4"
+          >
+            <div>
+              <h2 className="text-base font-semibold">{providerLabel(provider)}</h2>
+              <p className="text-xs text-neutral-600">Checking link status…</p>
+            </div>
+            <Button variant="outline" disabled>
+              Loading…
+            </Button>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
