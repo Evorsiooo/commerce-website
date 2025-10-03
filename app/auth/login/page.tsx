@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/ui/button";
 import { getBrowserSupabaseClient } from "@/lib/supabase/client";
-import { needsLinking } from "@/lib/auth/linking";
 import { extractAuthErrorMessage, isSupabaseUserMissingError } from "@/lib/auth/errors";
+import { shouldCompleteLinking } from "@/lib/auth/providers";
 
 const providers = [
   { id: "discord" as const, label: "Sign in with Discord" },
@@ -49,8 +49,8 @@ function LoginPageContent() {
         return;
       }
 
-      if (needsLinking(session)) {
-        router.replace(`/auth/link-accounts?redirect=${encodeURIComponent(destination)}`);
+      if (shouldCompleteLinking(session)) {
+        router.replace(`/auth/complete?redirect=${encodeURIComponent(destination)}`);
         return;
       }
 

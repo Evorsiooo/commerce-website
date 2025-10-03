@@ -4,8 +4,9 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 
 import type { Database } from "@/db/types/supabase";
 import { env } from "@/lib/env";
-import { needsLinking } from "@/lib/auth/linking";
+import { shouldCompleteLinking } from "@/lib/auth/providers";
 import { AUTH0_PKCE_COOKIE, decodePkceSession, getAuth0Config } from "@/lib/auth/auth0";
+import { extractAuthErrorMessage } from "@/lib/auth/errors";
 
 function buildErrorRedirect(origin: string, code: string) {
   const url = new URL("/auth/login", origin);
@@ -13,9 +14,23 @@ function buildErrorRedirect(origin: string, code: string) {
   return url;
 }
 
-function buildLinkRedirect(origin: string, redirect: string) {
-  const url = new URL("/auth/link-accounts", origin);
-  if (redirect && redirect !== "/auth/link-accounts") {
+function mapAuth0LinkError(error: unknown) {
+  const message = extractAuthErrorMessage(error);
+
+  if (message.toLowerCase().includes("already in use")) {
+    return "auth0_identity_conflict";
+  }
+
+  if (message.toLowerCase().includes("sub claim")) {
+    return "auth0_missing_user";
+  }
+
+  return "auth0_link_failed";
+}
+
+function buildCompletionRedirect(origin: string, redirect: string) {
+  const url = new URL("/auth/complete", origin);
+  if (redirect && redirect !== "/auth/complete") {
     url.searchParams.set("redirect", redirect);
   }
   return url;
@@ -113,10 +128,13 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error("Failed to link Auth0 identity", error);
-      return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_link_failed"));
+      const completionUrl = buildCompletionRedirect(requestUrl.origin, sessionData.redirect);
+      completionUrl.searchParams.set("error", mapAuth0LinkError(error));
+      completionUrl.searchParams.set("provider", "auth0");
+      return NextResponse.redirect(completionUrl);
     }
 
-    redirectUrl = buildLinkRedirect(requestUrl.origin, sessionData.redirect);
+    redirectUrl = buildCompletionRedirect(requestUrl.origin, sessionData.redirect);
   } else {
     const { error } = await supabase.auth.signInWithIdToken({
       provider: "auth0",
@@ -138,8 +156,8 @@ export async function GET(request: Request) {
 
     const session = data.session ?? null;
 
-    if (needsLinking(session)) {
-      redirectUrl = buildLinkRedirect(requestUrl.origin, sessionData.redirect);
+    if (shouldCompleteLinking(session)) {
+      redirectUrl = buildCompletionRedirect(requestUrl.origin, sessionData.redirect);
     } else {
       redirectUrl = new URL(sessionData.redirect || "/profile", requestUrl.origin);
     }

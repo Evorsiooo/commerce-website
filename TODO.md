@@ -6,19 +6,26 @@ These TODOs mirror the master plan and give us a quick checklist for implementat
 - [x] Supabase project configured (Discord + Auth0 providers, RLS baseline, storage buckets, generated types)
 - [x] Core database enums and tables scaffolded via migrations
 - [x] Next.js App Router scaffolded with Tailwind and shadcn/ui
-- [x] First-time login flow enforcing Discord + Roblox linking, with profile page stub showing linked accounts
+- [ ] First-time login flow enforcing Discord + Roblox linking, with profile page stub showing linked accounts _(needs rebuild in Phase 2.5b)_
 
 ## Phase 2 — Public Portal Basics
 - [x] Landing page and Regulations content pipeline in place
 - [x] Public Business Directory and Property Directory read views (approved data only)
 - [x] Tipline submission form (public) implemented
 
-## Phase 2.5 — Framework & Auth Stabilization
+## Phase 2.5a — Framework & Auth Stabilization
 - [x] Replace bespoke page markup with `PageShell`/template system (Landing, Directory, Form, Utility)
 - [x] Build shared content modules (`PageHeading`, `FilterBar`, `DirectoryCard`, `EmptyState`, `MarkdownArticle`)
 - [x] Re-platform Home, Regulations, Businesses, Properties, Tipline to use new templates and shared modules
-- [ ] Harden dual-provider auth flow (account status enum, link gate, navbar visibility, abandoned account cleanup)
-- [ ] Publish template & auth lifecycle docs (`docs/PHASE2_5_FRAMEWORK_PLAN.md`, per-template guides, README/master_plan updates)
+- [ ] Publish template lifecycle docs (`docs/PHASE2_5_FRAMEWORK_PLAN.md`, per-template guides, README/master_plan updates)
+
+## Phase 2.5b — Auth Relaunch & Linking
+- [x] Decouple Discord and Roblox sign-ins from legacy linking checks; ensure each creates Supabase users independently
+- [ ] Remove legacy linking UI, helpers, and redirects; document new baseline auth behavior
+- [x] Implement new dual-provider linking screen triggered after first login (status summary, call-to-actions, error messaging)
+- [x] Add robust server handlers for linking/unlinking, identity conflict detection, and Supabase session recovery
+- [ ] Write integration tests covering Discord-first, Roblox-first, duplicate identity, and cancellation scenarios
+- [ ] Update onboarding docs, env guidance, and ops runbook for the refreshed auth flow
 
 ## Phase 3 — Business Onboarding & Self-Service
 - [ ] Business formation wizard + Business License form built with React Hook Form + Zod

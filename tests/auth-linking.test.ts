@@ -1,7 +1,11 @@
 import type { Session, User, UserIdentity } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
-import { needsLinking, providerLabel, resolveLinkedProviders } from "@/lib/auth/linking";
+import {
+  getProviderStateMap,
+  providerLabel,
+  shouldCompleteLinking,
+} from "@/lib/auth/providers";
 
 function createIdentity(provider: string): UserIdentity {
   return {
@@ -48,11 +52,11 @@ function createSession(user: User): Session {
 
 const baseUser = createUser([]);
 
-describe("resolveLinkedProviders", () => {
+describe("getProviderStateMap", () => {
   it("marks providers as false when no identities", () => {
-    const state = resolveLinkedProviders(baseUser);
-    expect(state.discord).toBe(false);
-    expect(state.auth0).toBe(false);
+    const state = getProviderStateMap(baseUser);
+    expect(state.discord.linked).toBe(false);
+    expect(state.auth0.linked).toBe(false);
   });
 
   it("detects linked providers", () => {
@@ -61,17 +65,17 @@ describe("resolveLinkedProviders", () => {
       createIdentity("auth0"),
     ]);
 
-    const state = resolveLinkedProviders(user);
-    expect(state.discord).toBe(true);
-    expect(state.auth0).toBe(true);
+    const state = getProviderStateMap(user);
+    expect(state.discord.linked).toBe(true);
+    expect(state.auth0.linked).toBe(true);
   });
 });
 
-describe("needsLinking", () => {
+describe("shouldCompleteLinking", () => {
   it("returns true when a provider is missing", () => {
-  const session = createSession(createUser([createIdentity("discord")]));
+    const session = createSession(createUser([createIdentity("discord")]));
 
-    expect(needsLinking(session)).toBe(true);
+    expect(shouldCompleteLinking(session)).toBe(true);
   });
 
   it("returns false when all providers present", () => {
@@ -82,7 +86,7 @@ describe("needsLinking", () => {
       ]),
     );
 
-    expect(needsLinking(session)).toBe(false);
+    expect(shouldCompleteLinking(session)).toBe(false);
   });
 });
 

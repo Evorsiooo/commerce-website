@@ -4,7 +4,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 
 import type { Database } from "@/db/types/supabase";
 import { env } from "@/lib/env";
-import { needsLinking } from "@/lib/auth/linking";
+import { shouldCompleteLinking } from "@/lib/auth/providers";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -24,8 +24,8 @@ export async function GET(request: Request) {
 
     const { data, error } = await supabase.auth.getSession();
 
-    if (!error && needsLinking(data.session ?? null)) {
-      const linkUrl = new URL("/auth/link-accounts", requestUrl.origin);
+    if (!error && shouldCompleteLinking(data.session ?? null)) {
+      const linkUrl = new URL("/auth/complete", requestUrl.origin);
       linkUrl.searchParams.set("redirect", next);
       destination = `${linkUrl.pathname}${linkUrl.search}`;
     }
