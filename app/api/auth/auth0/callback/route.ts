@@ -73,7 +73,11 @@ export async function GET(request: Request) {
 
   if (!tokenResponse.ok) {
     const details = await tokenResponse.text();
-    console.error("Auth0 token exchange failed", details);
+    console.error("Auth0 token exchange failed", {
+      details,
+      provider: sessionData.provider,
+      connection: sessionData.connection,
+    });
     return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_token_exchange_failed"));
   }
 
@@ -100,7 +104,11 @@ export async function GET(request: Request) {
   } as never);
 
   if (error) {
-    console.error("Auth0 sign-in failed", error);
+    console.error("Auth0 sign-in failed", {
+      error,
+      provider: sessionData.provider,
+      connection: sessionData.connection,
+    });
     return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_sign_in_failed"));
   }
 

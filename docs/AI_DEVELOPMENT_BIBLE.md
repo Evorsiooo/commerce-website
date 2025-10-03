@@ -99,7 +99,7 @@
 2. ✅ `npm run typecheck`
 3. ✅ `npm test`
 4. ✅ Manual smoke of affected pages (mobile + desktop viewport)
-5. ✅ Verify auth/linking behavior if touched (attempt anonymous access + dual-provider flow)
+5. ✅ Verify auth/linking behavior if touched (attempt anonymous access + both Auth0-backed providers)
 6. ✅ Update TODO and docs
 7. ✅ Ensure migrations and generated types are committed together
 

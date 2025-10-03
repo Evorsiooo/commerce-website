@@ -10,6 +10,7 @@ import {
   createCodeVerifier,
   encodePkceSession,
   getAuth0Config,
+  resolveAuth0Connection,
 } from "@/lib/auth/auth0";
 
 function sanitizeRedirect(input: string | null) {
@@ -22,6 +23,8 @@ function sanitizeRedirect(input: string | null) {
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  const provider = requestUrl.searchParams.get("provider");
+  const connectionOverride = requestUrl.searchParams.get("connection");
 
   let config;
   try {
@@ -37,6 +40,7 @@ export async function GET(request: Request) {
   const verifier = createCodeVerifier();
   const challenge = createCodeChallenge(verifier);
   const redirectPath = sanitizeRedirect(requestUrl.searchParams.get("redirect"));
+  const resolvedConnection = resolveAuth0Connection(config, provider, connectionOverride);
 
   const callbackUrl = new URL("/api/auth/auth0/callback", requestUrl.origin);
   const authorizeUrl = new URL("/authorize", config.domain);
@@ -57,10 +61,16 @@ export async function GET(request: Request) {
     authorizeUrl.searchParams.set("connection", config.connection);
   }
 
+  if (resolvedConnection && resolvedConnection !== config.connection) {
+    authorizeUrl.searchParams.set("connection", resolvedConnection);
+  }
+
   const sessionPayload = encodePkceSession({
     state,
     verifier,
     redirect: redirectPath,
+    provider: provider?.trim() ?? null,
+    connection: resolvedConnection ?? null,
   });
 
   const response = NextResponse.redirect(authorizeUrl);

@@ -6,18 +6,21 @@ export type Auth0PkceSession = {
   state: string;
   verifier: string;
   redirect: string;
+  provider?: string | null;
+  connection?: string | null;
 };
 
 export const AUTH0_PKCE_COOKIE = "auth0_pkce";
 export const AUTH0_PKCE_MAX_AGE = 60 * 5; // five minutes
-export const AUTH0_SCOPE = "openid profile";
+export const AUTH0_SCOPE = "openid profile email";
 
 export function getAuth0Config() {
   const domain = env.AUTH0_DOMAIN;
   const clientId = env.AUTH0_CLIENT_ID;
   const clientSecret = env.AUTH0_CLIENT_SECRET;
   const audience = env.AUTH0_AUDIENCE;
-  const connection = env.AUTH0_CONNECTION;
+  const defaultConnection = env.AUTH0_ROBLOX_CONNECTION ?? env.AUTH0_CONNECTION;
+  const discordConnection = env.AUTH0_DISCORD_CONNECTION;
 
   if (!domain || !clientId || !clientSecret) {
     throw new Error("Auth0 environment variables are not fully configured.");
@@ -30,8 +33,30 @@ export function getAuth0Config() {
     clientId,
     clientSecret,
     audience: audience?.trim() ?? undefined,
-    connection: connection?.trim() ?? undefined,
+    connection: defaultConnection?.trim() ?? undefined,
+    connections: {
+      roblox: defaultConnection?.trim() ?? undefined,
+      discord: discordConnection?.trim() ?? undefined,
+    },
   };
+}
+
+export function resolveAuth0Connection(config: ReturnType<typeof getAuth0Config>, provider: string | null, override: string | null) {
+  if (override && override.trim().length > 0) {
+    return override.trim();
+  }
+
+  const normalizedProvider = provider?.trim().toLowerCase();
+
+  if (normalizedProvider === "discord") {
+    return config.connections.discord ?? config.connections.roblox ?? config.connection;
+  }
+
+  if (normalizedProvider === "roblox") {
+    return config.connections.roblox ?? config.connection;
+  }
+
+  return config.connection;
 }
 
 function normalizeAuth0Domain(rawDomain: string) {
@@ -70,7 +95,13 @@ export function decodePkceSession(value: string): Auth0PkceSession {
     throw new Error("Invalid Auth0 PKCE session payload");
   }
 
-  return parsed as Auth0PkceSession;
+  return {
+    state: parsed.state,
+    verifier: parsed.verifier,
+    redirect: parsed.redirect,
+    provider: typeof parsed.provider === "string" ? parsed.provider : null,
+    connection: typeof parsed.connection === "string" ? parsed.connection : null,
+  } satisfies Auth0PkceSession;
 }
 
 function base64UrlEncode(buffer: Buffer) {

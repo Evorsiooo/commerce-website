@@ -9,7 +9,7 @@ import { extractAuthErrorMessage, isSupabaseUserMissingError } from "@/lib/auth/
 
 const providers = [
   { id: "discord" as const, label: "Sign in with Discord" },
-  { id: "auth0" as const, label: "Sign in with Roblox" },
+  { id: "roblox" as const, label: "Sign in with Roblox" },
 ];
 
 type ProviderId = (typeof providers)[number]["id"];
@@ -25,10 +25,18 @@ export default function LoginPage() {
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const destination = searchParams.get("redirect") ?? "/profile";
+  const errorCode = searchParams.get("error");
   const router = useRouter();
   const supabase = useMemo(() => getBrowserSupabaseClient(), []);
   const [loading, setLoading] = useState<ProviderId | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const resolvedError = useMemo(() => mapAuthErrorCode(errorCode), [errorCode]);
+
+  useEffect(() => {
+    if (resolvedError) {
+      setError(resolvedError);
+    }
+  }, [resolvedError]);
 
   useEffect(() => {
     void supabase.auth.getSession().then(async ({ data, error }) => {
@@ -53,35 +61,12 @@ function LoginPageContent() {
     async (provider: ProviderId) => {
       setError(null);
       setLoading(provider);
-
-      if (provider === "auth0") {
-        const startUrl = new URL("/api/auth/auth0/start", window.location.origin);
-        startUrl.searchParams.set("redirect", destination);
-        window.location.href = startUrl.toString();
-        return;
-      }
-
-      const url = new URL(window.location.origin + "/auth/callback");
-      url.searchParams.set("redirect", destination);
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: url.toString(),
-          scopes: "identify",
-          queryParams: {
-            scope: "identify",
-          },
-        },
-      });
-
-      if (error) {
-        console.error(error);
-        setError(extractAuthErrorMessage(error));
-        setLoading(null);
-      }
+      const startUrl = new URL("/api/auth/auth0/start", window.location.origin);
+      startUrl.searchParams.set("redirect", destination);
+      startUrl.searchParams.set("provider", provider);
+      window.location.href = startUrl.toString();
     },
-    [destination, supabase],
+    [destination],
   );
 
   return (
@@ -130,4 +115,26 @@ function LoginPageFallback() {
       <div className="h-16 w-full animate-pulse rounded bg-neutral-100" />
     </section>
   );
+}
+
+function mapAuthErrorCode(code: string | null): string | null {
+  if (!code) {
+    return null;
+  }
+
+  switch (code) {
+    case "auth0_not_configured":
+      return "Roblox authentication is temporarily unavailable. Please contact support.";
+    case "auth0_session_expired":
+      return "Your sign-in session expired. Please try again.";
+    case "auth0_state_mismatch":
+      return "We couldn't verify your Roblox login. Please start the sign-in process again.";
+    case "auth0_token_exchange_failed":
+    case "auth0_token_missing":
+      return "Roblox sign-in failed while exchanging credentials. Please retry in a moment.";
+    case "auth0_sign_in_failed":
+      return "We couldn't create your Roblox session. Please ensure the account isn't already linked.";
+    default:
+      return null;
+  }
 }

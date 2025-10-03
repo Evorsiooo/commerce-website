@@ -6,8 +6,8 @@ This guide lists the manual tasks required to bring the Phase 1 foundation onlin
 
 1. Create a new Supabase project (US East preferred) and note the **Project Reference**.
 2. In **Authentication → Providers**:
-   - Enable **Discord**. Copy the client ID/secret from your Discord application and set the redirect URL to `https://<project-ref>.supabase.co/auth/v1/callback`.
-   - Enable **Auth0** with a custom app that connects to your Roblox OAuth bridge. Use the same redirect URL and expose the connection as `auth0`.
+   - Enable **Auth0** with your unified OAuth broker and set the redirect URL to `https://<project-ref>.supabase.co/auth/v1/callback`.
+   - Disable Supabase's built-in Discord provider. Discord now authenticates through Auth0 alongside Roblox, so Supabase only needs the Auth0 provider enabled.
 3. In **Authentication → URL Configuration**, set the site URL to your Vercel deployment (or `http://localhost:3000` for development).
 4. In **Storage → Buckets**, create buckets for `business-logos`, `property-photos`, and `audit-attachments`. Leave them private for now.
 5. Open the SQL editor and run `db/migrations/0001_initial_schema.sql` to seed enums, tables, and RLS policies.
@@ -16,15 +16,15 @@ This guide lists the manual tasks required to bring the Phase 1 foundation onlin
 
 1. Create an Auth0 tenant dedicated to Roblox OAuth.
 2. Register a **Regular Web Application** with the same callback URL used above.
-3. Under **Connections → Social**, create or enable your Roblox OAuth connection and name it exactly `roblox` (or the name you prefer—ensure it maps to `auth0` within Supabase).
-4. In **Actions → Flows → Login**, add a post-login action that stores the Roblox username and ID in the ID token for Supabase to receive.
+3. Under **Connections → Social**, enable both Roblox and Discord. Use stable connection names (for example, `roblox` and `discord`) to reference in environment variables.
+4. In **Actions → Flows → Login**, add a post-login action that (a) stores the Roblox username/ID and Discord metadata, and (b) fabricates a deterministic email (e.g., `roblox_<id>@oauth.local`) so Supabase will accept the sign-in without exposing real addresses. Be sure the action adds an `email` claim because the application requests the `email` scope.
 5. Add `http://localhost:3000/auth/callback` to the Allowed Callback URLs for local development.
 
 ## 3. Discord Application Checklist
 
 1. Create a Discord application and OAuth redirect URI `http://localhost:3000/auth/callback` plus your Vercel domain.
 2. Enable scopes `identify` and `email`. (The application also requests `guilds`; ensure it’s allowed.)
-3. Copy the client ID/secret into Supabase’s Discord provider configuration.
+3. Copy the client ID/secret into Auth0’s Discord social connection configuration.
 4. If you plan to send webhook notifications, create the channel webhook URL now and paste it into `.env` later.
 
 ## 4. Environment Variables
@@ -37,6 +37,7 @@ This guide lists the manual tasks required to bring the Phase 1 foundation onlin
    - `SUPABASE_PROJECT_REF` – Supabase project reference (needed for the type generator script).
    - `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` – From Auth0 application.
    - `DISCORD_WEBHOOK_URL` – Optional, for notifications.
+   - `AUTH0_ROBLOX_CONNECTION`, `AUTH0_DISCORD_CONNECTION` – Exact Auth0 connection names for Roblox and Discord social logins (fallback to `AUTH0_CONNECTION` for Roblox if present).
 3. Restart the dev server after editing env values.
 
 ## 5. Generate Types & Run Checks

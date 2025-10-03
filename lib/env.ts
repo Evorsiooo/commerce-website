@@ -16,6 +16,8 @@ const serverSchema = z
     AUTH0_CLIENT_SECRET: z.string().min(1).optional(),
     AUTH0_AUDIENCE: z.string().min(1).optional(),
     AUTH0_CONNECTION: z.string().min(1).optional(),
+    AUTH0_DISCORD_CONNECTION: z.string().min(1).optional(),
+    AUTH0_ROBLOX_CONNECTION: z.string().min(1).optional(),
   })
   .transform((env) => ({
     ...env,
@@ -44,6 +46,8 @@ const runtimeEnv = {
   AUTH0_CLIENT_SECRET: typeof process !== "undefined" ? process.env.AUTH0_CLIENT_SECRET : undefined,
   AUTH0_AUDIENCE: typeof process !== "undefined" ? process.env.AUTH0_AUDIENCE : undefined,
   AUTH0_CONNECTION: typeof process !== "undefined" ? process.env.AUTH0_CONNECTION : undefined,
+  AUTH0_DISCORD_CONNECTION: typeof process !== "undefined" ? process.env.AUTH0_DISCORD_CONNECTION : undefined,
+  AUTH0_ROBLOX_CONNECTION: typeof process !== "undefined" ? process.env.AUTH0_ROBLOX_CONNECTION : undefined,
 } satisfies Record<string, string | undefined>;
 
 const parsed = serverSchema.safeParse(runtimeEnv);
