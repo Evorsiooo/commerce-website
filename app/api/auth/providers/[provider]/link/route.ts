@@ -15,8 +15,9 @@ type LinkPayload = {
   redirect?: string;
 };
 
-export async function POST(request: Request, { params }: { params: { provider: string } }) {
-  const provider = normalizeProvider(params.provider);
+export async function POST(request: Request, context: unknown) {
+  const providerParam = (context as { params?: { provider?: string } })?.params?.provider ?? null;
+  const provider = normalizeProvider(providerParam ?? "");
 
   if (!provider) {
     return NextResponse.json({ message: "Unknown provider" }, { status: 400 });
