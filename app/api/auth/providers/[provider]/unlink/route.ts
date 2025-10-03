@@ -14,16 +14,10 @@ import { extractAuthErrorMessage } from "@/lib/auth/errors";
 
 const MIN_LINKED_PROVIDERS = 1;
 
-type RouteContext = {
-  params: {
-    provider: string;
-  };
-};
-
 type UnlinkResponse = ReturnType<typeof getProviderStateMap>;
 
-export async function DELETE(request: Request, context: RouteContext) {
-  const provider = normalizeProvider(context.params.provider);
+export async function DELETE(request: Request, { params }: { params: { provider: string } }) {
+  const provider = normalizeProvider(params.provider);
 
   if (!provider) {
     return NextResponse.json({ message: "Unknown provider" }, { status: 400 });

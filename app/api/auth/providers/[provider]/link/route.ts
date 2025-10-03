@@ -15,14 +15,8 @@ type LinkPayload = {
   redirect?: string;
 };
 
-type RouteContext = {
-  params: {
-    provider: string;
-  };
-};
-
-export async function POST(request: Request, context: RouteContext) {
-  const provider = normalizeProvider(context.params.provider);
+export async function POST(request: Request, { params }: { params: { provider: string } }) {
+  const provider = normalizeProvider(params.provider);
 
   if (!provider) {
     return NextResponse.json({ message: "Unknown provider" }, { status: 400 });
