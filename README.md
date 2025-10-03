@@ -33,12 +33,12 @@ npm run supabase:types  # Regenerate Supabase database types (after supabase lin
 - `lib/` – Environment parsing, Supabase clients, auth helpers
 - `db/migrations/` – SQL migrations (Phase 1 ships `0001_initial_schema.sql`)
 - `docs/` – Operator guides and manual setup instructions
-- `tests/` – Vitest suite (currently covers auth linking helpers)
+- `tests/` – Vitest suite (ready for future auth coverage)
 
 ### Phase 1 checks
 
 - ✅ Next.js scaffold with shared layout & navigation
 - ✅ Supabase schema + RLS baseline
-- ✅ Dual-provider linking flow (Discord + Roblox/Auth0)
+- ✅ Dual-provider linking flow (Discord + Roblox/Auth0) *(temporarily disabled during relaunch prep)*
 - ✅ Profile stub and middleware enforcement
 - ✅ Vitest suite + ESLint/TypeScript configuration

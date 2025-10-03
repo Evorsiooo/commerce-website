@@ -6,7 +6,7 @@ These TODOs mirror the master plan and give us a quick checklist for implementat
 - [x] Supabase project configured (Discord + Auth0 providers, RLS baseline, storage buckets, generated types)
 - [x] Core database enums and tables scaffolded via migrations
 - [x] Next.js App Router scaffolded with Tailwind and shadcn/ui
-- [ ] First-time login flow enforcing Discord + Roblox linking, with profile page stub showing linked accounts _(needs rebuild in Phase 2.5b)_
+- [ ] First-time login flow enforcing Discord + Roblox linking _(deferred; rebuilt under Phase 2.5b relaunch)_
 
 ## Phase 2 — Public Portal Basics
 - [x] Landing page and Regulations content pipeline in place
@@ -20,10 +20,10 @@ These TODOs mirror the master plan and give us a quick checklist for implementat
 - [ ] Publish template lifecycle docs (`docs/PHASE2_5_FRAMEWORK_PLAN.md`, per-template guides, README/master_plan updates)
 
 ## Phase 2.5b — Auth Relaunch & Linking
-- [x] Decouple Discord and Roblox sign-ins from legacy linking checks; ensure each creates Supabase users independently
-- [ ] Remove legacy linking UI, helpers, and redirects; document new baseline auth behavior
-- [x] Implement new dual-provider linking screen triggered after first login (status summary, call-to-actions, error messaging)
-- [x] Add robust server handlers for linking/unlinking, identity conflict detection, and Supabase session recovery
+- [x] Decouple Discord and Roblox sign-ins from legacy linking checks; ensure each creates Supabase users independently *(single-provider baseline live)*
+- [x] Remove legacy linking UI, helpers, and redirects; document new baseline auth behavior *(README refreshed; full docs still pending)*
+- [ ] Implement new dual-provider linking screen triggered after first login (status summary, call-to-actions, error messaging)
+- [ ] Add robust server handlers for linking/unlinking, identity conflict detection, and Supabase session recovery
 - [ ] Write integration tests covering Discord-first, Roblox-first, duplicate identity, and cancellation scenarios
 - [ ] Update onboarding docs, env guidance, and ops runbook for the refreshed auth flow
 

@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getProviderStates } from "@/lib/auth/providers";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/app/profile/logout-button";
 
@@ -15,9 +13,8 @@ export default async function ProfilePage() {
     redirect(`/auth/login?redirect=${encodeURIComponent("/profile")}`);
   }
 
-  const providerStates = getProviderStates(session.user);
   const profile = session.user.user_metadata ?? {};
-  const allowLinking = providerStates.some((state) => !state.linked);
+  const identities = session.user.identities ?? [];
 
   return (
     <div className="flex flex-col gap-8">
@@ -47,28 +44,24 @@ export default async function ProfilePage() {
 
         <footer className="mt-8 flex flex-wrap gap-3">
           <LogoutButton />
-          {allowLinking ? (
-            <Link
-              href="/auth/complete"
-              className="inline-flex items-center rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-100"
-            >
-              Link missing providers
-            </Link>
-          ) : null}
         </footer>
       </section>
 
       <section className="rounded-3xl border border-neutral-200 bg-white p-8 shadow-sm">
-        <h2 className="text-lg font-semibold">Linked identity providers</h2>
+        <h2 className="text-lg font-semibold">Identity providers</h2>
         <ul className="mt-4 grid gap-3 md:grid-cols-2">
-          {providerStates.map((state) => (
-            <li key={state.id} className="flex items-center justify-between rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm">
-              <span>{state.label}</span>
-              <span className={state.linked ? "text-emerald-600" : "text-amber-600"}>
-                {state.linked ? "Linked" : "Not linked"}
-              </span>
+          {identities.length === 0 ? (
+            <li className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+              No identity providers detected.
             </li>
-          ))}
+          ) : (
+            identities.map((identity) => (
+              <li key={`${identity.provider}:${identity.id}`} className="flex flex-col rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm">
+                <span className="font-medium capitalize">{identity.provider}</span>
+                <span className="text-xs text-neutral-600">{identity.id}</span>
+              </li>
+            ))
+          )}
         </ul>
       </section>
     </div>

@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/ui/button";
 import { getBrowserSupabaseClient } from "@/lib/supabase/client";
 import { extractAuthErrorMessage, isSupabaseUserMissingError } from "@/lib/auth/errors";
-import { shouldCompleteLinking } from "@/lib/auth/providers";
 
 const providers = [
   { id: "discord" as const, label: "Sign in with Discord" },
@@ -44,17 +43,9 @@ function LoginPageContent() {
         return;
       }
 
-      const session = data.session;
-      if (!session) {
-        return;
+      if (data.session) {
+        router.replace(destination);
       }
-
-      if (shouldCompleteLinking(session)) {
-        router.replace(`/auth/complete?redirect=${encodeURIComponent(destination)}`);
-        return;
-      }
-
-      router.replace(destination);
     });
   }, [destination, router, supabase]);
 
@@ -98,7 +89,7 @@ function LoginPageContent() {
       <header className="flex flex-col gap-2 text-center">
         <h1 className="text-2xl font-semibold">Access the Commerce Portal</h1>
         <p className="text-sm text-neutral-600">
-          Login with both Discord and Roblox to unlock business owner and staff features.
+          Choose Discord or Roblox to access the Commerce Portal. You can add additional providers later when linking is available.
         </p>
       </header>
 

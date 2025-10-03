@@ -2,13 +2,10 @@ import crypto from "node:crypto";
 
 import { env } from "@/lib/env";
 
-export type Auth0Intent = "login" | "link";
-
 export type Auth0PkceSession = {
   state: string;
   verifier: string;
   redirect: string;
-  intent: Auth0Intent;
 };
 
 export const AUTH0_PKCE_COOKIE = "auth0_pkce";
@@ -68,8 +65,7 @@ export function decodePkceSession(value: string): Auth0PkceSession {
     !parsed ||
     typeof parsed.state !== "string" ||
     typeof parsed.verifier !== "string" ||
-    typeof parsed.redirect !== "string" ||
-    (parsed.intent !== "login" && parsed.intent !== "link")
+    typeof parsed.redirect !== "string"
   ) {
     throw new Error("Invalid Auth0 PKCE session payload");
   }

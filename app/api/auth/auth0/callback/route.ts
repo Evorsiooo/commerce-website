@@ -4,35 +4,11 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 
 import type { Database } from "@/db/types/supabase";
 import { env } from "@/lib/env";
-import { shouldCompleteLinking } from "@/lib/auth/providers";
 import { AUTH0_PKCE_COOKIE, decodePkceSession, getAuth0Config } from "@/lib/auth/auth0";
-import { extractAuthErrorMessage } from "@/lib/auth/errors";
 
 function buildErrorRedirect(origin: string, code: string) {
   const url = new URL("/auth/login", origin);
   url.searchParams.set("error", code);
-  return url;
-}
-
-function mapAuth0LinkError(error: unknown) {
-  const message = extractAuthErrorMessage(error);
-
-  if (message.toLowerCase().includes("already in use")) {
-    return "auth0_identity_conflict";
-  }
-
-  if (message.toLowerCase().includes("sub claim")) {
-    return "auth0_missing_user";
-  }
-
-  return "auth0_link_failed";
-}
-
-function buildCompletionRedirect(origin: string, redirect: string) {
-  const url = new URL("/auth/complete", origin);
-  if (redirect && redirect !== "/auth/complete") {
-    url.searchParams.set("redirect", redirect);
-  }
   return url;
 }
 
@@ -117,51 +93,18 @@ export async function GET(request: Request) {
     supabaseKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   });
 
-  let redirectUrl: URL;
+  const { error } = await supabase.auth.signInWithIdToken({
+    provider: "auth0",
+    token: tokens.id_token,
+    access_token: tokens.access_token,
+  } as never);
 
-  if (sessionData.intent === "link") {
-    const { error } = await supabase.auth.linkIdentity({
-      provider: "auth0",
-      token: tokens.id_token,
-      access_token: tokens.access_token,
-    } as never);
-
-    if (error) {
-      console.error("Failed to link Auth0 identity", error);
-      const completionUrl = buildCompletionRedirect(requestUrl.origin, sessionData.redirect);
-      completionUrl.searchParams.set("error", mapAuth0LinkError(error));
-      completionUrl.searchParams.set("provider", "auth0");
-      return NextResponse.redirect(completionUrl);
-    }
-
-    redirectUrl = buildCompletionRedirect(requestUrl.origin, sessionData.redirect);
-  } else {
-    const { error } = await supabase.auth.signInWithIdToken({
-      provider: "auth0",
-      token: tokens.id_token,
-      access_token: tokens.access_token,
-    } as never);
-
-    if (error) {
-      console.error("Auth0 sign-in failed", error);
-      return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_sign_in_failed"));
-    }
-
-    const { data, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error("Failed to load session after Auth0 sign-in", sessionError);
-      return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_session_error"));
-    }
-
-    const session = data.session ?? null;
-
-    if (shouldCompleteLinking(session)) {
-      redirectUrl = buildCompletionRedirect(requestUrl.origin, sessionData.redirect);
-    } else {
-      redirectUrl = new URL(sessionData.redirect || "/profile", requestUrl.origin);
-    }
+  if (error) {
+    console.error("Auth0 sign-in failed", error);
+    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_sign_in_failed"));
   }
+
+  const redirectUrl = new URL(sessionData.redirect || "/profile", requestUrl.origin);
 
   const response = NextResponse.redirect(redirectUrl);
   response.cookies.set({

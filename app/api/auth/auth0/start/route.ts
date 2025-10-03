@@ -6,7 +6,6 @@ import {
   AUTH0_PKCE_COOKIE,
   AUTH0_PKCE_MAX_AGE,
   AUTH0_SCOPE,
-  type Auth0Intent,
   createCodeChallenge,
   createCodeVerifier,
   encodePkceSession,
@@ -19,10 +18,6 @@ function sanitizeRedirect(input: string | null) {
   }
 
   return input;
-}
-
-function parseIntent(value: string | null): Auth0Intent {
-  return value === "link" ? "link" : "login";
 }
 
 export async function GET(request: Request) {
@@ -42,7 +37,6 @@ export async function GET(request: Request) {
   const verifier = createCodeVerifier();
   const challenge = createCodeChallenge(verifier);
   const redirectPath = sanitizeRedirect(requestUrl.searchParams.get("redirect"));
-  const intent = parseIntent(requestUrl.searchParams.get("intent"));
 
   const callbackUrl = new URL("/api/auth/auth0/callback", requestUrl.origin);
   const authorizeUrl = new URL("/authorize", config.domain);
@@ -63,15 +57,10 @@ export async function GET(request: Request) {
     authorizeUrl.searchParams.set("connection", config.connection);
   }
 
-  if (intent === "link") {
-    authorizeUrl.searchParams.set("prompt", "login");
-  }
-
   const sessionPayload = encodePkceSession({
     state,
     verifier,
     redirect: redirectPath,
-    intent,
   });
 
   const response = NextResponse.redirect(authorizeUrl);
