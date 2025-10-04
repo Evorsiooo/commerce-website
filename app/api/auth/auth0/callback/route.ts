@@ -87,6 +87,8 @@ export async function GET(request: Request) {
     token_type?: string;
   };
 
+  console.debug("[auth0 callback] tokens", tokens);
+
   if (!tokens.id_token || !tokens.access_token) {
     console.error("Auth0 token response missing fields", tokens);
     return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_token_missing"));
