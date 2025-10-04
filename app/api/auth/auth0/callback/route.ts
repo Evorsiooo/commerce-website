@@ -87,8 +87,6 @@ export async function GET(request: Request) {
     token_type?: string;
   };
 
-  console.debug("[auth0 callback] tokens", tokens);
-
   if (!tokens.id_token || !tokens.access_token) {
     console.error("Auth0 token response missing fields", tokens);
     return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_token_missing"));
@@ -98,6 +96,19 @@ export async function GET(request: Request) {
     supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL,
     supabaseKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   });
+
+  try {
+    const settingsResponse = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
+      headers: {
+        apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        authorization: `Bearer ${env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+      },
+    });
+    const settings = await settingsResponse.json();
+    console.debug("[auth0 callback] supabase settings", settings);
+  } catch (settingsError) {
+    console.error("[auth0 callback] failed to load supabase settings", settingsError);
+  }
 
   const { error } = await supabase.auth.signInWithIdToken({
     provider: "auth0",
