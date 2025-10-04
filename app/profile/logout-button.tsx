@@ -4,25 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/ui/button";
+import { getBrowserSupabaseClient } from "@/lib/supabase/client";
+
 export function LogoutButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleSignOut = async () => {
     setLoading(true);
-    try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+    const supabase = getBrowserSupabaseClient();
+    const { error } = await supabase.auth.signOut();
 
-      if (!response.ok) {
-        console.error("Failed to log out", response.status, response.statusText);
-        setLoading(false);
-        return;
-      }
-    } catch (error) {
-      console.error("Failed to log out", error);
+    if (error) {
+      console.error(error);
       setLoading(false);
       return;
     }

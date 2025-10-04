@@ -1,7 +1,13 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { type ReactNode, useMemo } from "react";
+
+import { getBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export function Providers({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+  const supabase = useMemo(() => getBrowserSupabaseClient(), []) as unknown as SupabaseClient;
+
+  return <SessionContextProvider supabaseClient={supabase}>{children}</SessionContextProvider>;
 }

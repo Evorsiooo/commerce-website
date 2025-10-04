@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 
+import type { Database } from "@/db/types/supabase";
+import { env } from "@/lib/env";
 import { AUTH0_PKCE_COOKIE, decodePkceSession, getAuth0Config } from "@/lib/auth/auth0";
-import { setAuth0SessionCookies, verifyAuth0IdToken } from "@/lib/auth/session";
 
 function buildErrorRedirect(origin: string, code: string) {
   const url = new URL("/auth/login", origin);
@@ -83,7 +85,6 @@ export async function GET(request: Request) {
     id_token?: string;
     access_token?: string;
     token_type?: string;
-    expires_in?: number;
   };
 
   if (!tokens.id_token || !tokens.access_token) {
@@ -91,37 +92,34 @@ export async function GET(request: Request) {
     return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_token_missing"));
   }
 
-  try {
-    await verifyAuth0IdToken(tokens.id_token);
-  } catch (error) {
-    console.error("Auth0 ID token verification failed", {
+  const supabase = createRouteHandlerClient<Database>({ cookies }, {
+    supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL,
+    supabaseKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  });
+
+  const { error } = await supabase.auth.signInWithIdToken({
+    provider: "auth0",
+    token: tokens.id_token,
+    access_token: tokens.access_token,
+  } as never);
+
+  if (error) {
+    console.error("Auth0 sign-in failed", {
       error,
       provider: sessionData.provider,
       connection: sessionData.connection,
     });
-    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_invalid_token"));
+    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_sign_in_failed"));
   }
 
-  const expiresIn = typeof tokens.expires_in === "number" ? tokens.expires_in : 3600;
-  const expiresAt = Math.floor(Date.now() / 1000) + expiresIn;
-
   const redirectUrl = new URL(sessionData.redirect || "/profile", requestUrl.origin);
-  const response = NextResponse.redirect(redirectUrl);
 
+  const response = NextResponse.redirect(redirectUrl);
   response.cookies.set({
     name: AUTH0_PKCE_COOKIE,
     value: "",
     maxAge: 0,
     path: "/",
   });
-
-  setAuth0SessionCookies(response, {
-    accessToken: tokens.access_token,
-    idToken: tokens.id_token,
-    expiresAt,
-    provider: sessionData.provider ?? null,
-    connection: sessionData.connection ?? null,
-  });
-
   return response;
 }

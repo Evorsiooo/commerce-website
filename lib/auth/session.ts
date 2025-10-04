@@ -1,157 +1,105 @@
 import { cookies } from "next/headers";
-import type { NextRequest } from "next/server";
-import { createRemoteJWKSet, jwtVerify } from "jose";
 
-import { getAuth0Config } from "@/lib/auth/auth0";
+export const AUTH0_SESSION_COOKIE = "auth0_session";
+export const AUTH0_SESSION_COOKIE_OPTIONS = {
+  httpOnly: true as const,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+};
 
-export const AUTH0_ACCESS_COOKIE = "auth0_access_token";
-export const AUTH0_ID_COOKIE = "auth0_id_token";
-export const AUTH0_EXPIRES_COOKIE = "auth0_expires_at";
-export const AUTH0_PROVIDER_COOKIE = "auth0_provider";
-export const AUTH0_CONNECTION_COOKIE = "auth0_connection";
+export const AUTH0_SESSION_COOKIE_CLEAR = {
+  name: AUTH0_SESSION_COOKIE,
+  value: "",
+  maxAge: 0,
+  path: "/",
+};
 
 export type Auth0Session = {
   accessToken: string;
   idToken: string;
-  expiresAt: number;
-  provider: string | null;
-  connection: string | null;
-  claims: Record<string, unknown> & { sub: string };
+  expiresAt: number; // epoch seconds
+  tokenType: string;
+  scope?: string | null;
+  provider?: string | null;
+  connection?: string | null;
 };
 
-type CookieStoreLike = {
-  get(name: string): { value: string | undefined } | undefined;
-};
-
-let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
-
-function getJwks() {
-  if (!jwks) {
-    const { domain } = getAuth0Config();
-    jwks = createRemoteJWKSet(new URL("/.well-known/jwks.json", domain));
-  }
-
-  return jwks;
+export function encodeAuth0Session(session: Auth0Session) {
+  return Buffer.from(JSON.stringify(session), "utf8").toString("base64url");
 }
 
-function decodeCookieValue(value: string | undefined) {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
+export function createAuth0SessionCookie(session: Auth0Session) {
+  return {
+    name: AUTH0_SESSION_COOKIE,
+    value: encodeAuth0Session(session),
+    maxAge: getAuth0SessionCookieMaxAge(session.expiresAt),
+    ...AUTH0_SESSION_COOKIE_OPTIONS,
+  };
 }
 
-export async function verifyAuth0IdToken(idToken: string) {
-  const { clientId, domain } = getAuth0Config();
+export function decodeAuth0Session(value: string): Auth0Session {
+  const decoded = Buffer.from(value, "base64url").toString("utf8");
+  const parsed = JSON.parse(decoded);
 
-  const result = await jwtVerify(idToken, getJwks(), {
-    issuer: `${domain}/`,
-    audience: clientId,
-  });
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("Invalid Auth0 session payload");
+  }
 
-  return result.payload as Record<string, unknown> & { sub: string };
+  const { accessToken, idToken, expiresAt, tokenType, scope, provider, connection } = parsed as Partial<Auth0Session>;
+
+  if (typeof accessToken !== "string" || accessToken.length === 0) {
+    throw new Error("Auth0 session missing accessToken");
+  }
+
+  if (typeof idToken !== "string" || idToken.length === 0) {
+    throw new Error("Auth0 session missing idToken");
+  }
+
+  if (typeof expiresAt !== "number") {
+    throw new Error("Auth0 session missing expiresAt");
+  }
+
+  if (typeof tokenType !== "string" || tokenType.length === 0) {
+    throw new Error("Auth0 session missing tokenType");
+  }
+
+  return {
+    accessToken,
+    idToken,
+    expiresAt,
+    tokenType,
+    scope: scope ?? null,
+    provider: provider ?? null,
+    connection: connection ?? null,
+  } satisfies Auth0Session;
 }
 
-export async function readAuth0SessionFromCookies(
-  store?: CookieStoreLike | Promise<CookieStoreLike>,
-): Promise<Auth0Session | null> {
-  const cookieStore = store ? await store : await cookies();
+export function getAuth0SessionCookieMaxAge(expiresAt: number) {
+  const now = Math.floor(Date.now() / 1000);
+  const ttl = expiresAt - now;
+  return ttl > 0 ? ttl : 0;
+}
 
-  const accessToken = decodeCookieValue(cookieStore.get(AUTH0_ACCESS_COOKIE)?.value);
-  const idToken = decodeCookieValue(cookieStore.get(AUTH0_ID_COOKIE)?.value);
-  const expiresAtValue = decodeCookieValue(cookieStore.get(AUTH0_EXPIRES_COOKIE)?.value);
-  const provider = decodeCookieValue(cookieStore.get(AUTH0_PROVIDER_COOKIE)?.value) ?? null;
-  const connection = decodeCookieValue(cookieStore.get(AUTH0_CONNECTION_COOKIE)?.value) ?? null;
+type CookieStore = Awaited<ReturnType<typeof cookies>>;
 
-  if (!accessToken || !idToken || !expiresAtValue) {
+export async function getAuth0SessionFromCookies(cookieStore?: CookieStore) {
+  const store = cookieStore ?? (await cookies());
+  const sessionCookie = store.get(AUTH0_SESSION_COOKIE);
+
+  if (!sessionCookie?.value) {
     return null;
   }
 
-  const expiresAt = Number.parseInt(expiresAtValue, 10);
-
-  if (Number.isNaN(expiresAt) || expiresAt * 1000 < Date.now()) {
-    return null;
-  }
-
   try {
-    const claims = await verifyAuth0IdToken(idToken);
-    return {
-      accessToken,
-      idToken,
-      expiresAt,
-      provider,
-      connection,
-      claims,
-    } satisfies Auth0Session;
+    const session = decodeAuth0Session(sessionCookie.value);
+    const maxAge = getAuth0SessionCookieMaxAge(session.expiresAt);
+    if (maxAge <= 0) {
+      return null;
+    }
+    return session;
   } catch (error) {
-    console.error("Failed to verify Auth0 ID token", error);
+    console.error("Failed to parse Auth0 session cookie", error);
     return null;
   }
-}
-
-export async function readAuth0SessionFromRequest(req: NextRequest): Promise<Auth0Session | null> {
-  return readAuth0SessionFromCookies(req.cookies);
-}
-
-function buildCookieHeader(name: string, value: string, maxAge: number) {
-  const secure = process.env.NODE_ENV === "production";
-  const encodedValue = encodeURIComponent(value);
-  const parts = [
-    `${name}=${encodedValue}`,
-    `Max-Age=${Math.max(0, maxAge)}`,
-    "Path=/",
-    "HttpOnly",
-    "SameSite=Lax",
-  ];
-
-  if (secure) {
-    parts.push("Secure");
-  }
-
-  return parts.join("; ");
-}
-
-export function setAuth0SessionCookies(response: Response, session: {
-  accessToken: string;
-  idToken: string;
-  expiresAt: number;
-  provider: string | null | undefined;
-  connection: string | null | undefined;
-}) {
-  const maxAge = Math.max(0, session.expiresAt - Math.floor(Date.now() / 1000));
-
-  response.headers.append("Set-Cookie", buildCookieHeader(AUTH0_ACCESS_COOKIE, session.accessToken, maxAge));
-  response.headers.append("Set-Cookie", buildCookieHeader(AUTH0_ID_COOKIE, session.idToken, maxAge));
-  response.headers.append("Set-Cookie", buildCookieHeader(AUTH0_EXPIRES_COOKIE, String(session.expiresAt), maxAge));
-  response.headers.append("Set-Cookie", buildCookieHeader(AUTH0_PROVIDER_COOKIE, session.provider ?? "", maxAge));
-  response.headers.append("Set-Cookie", buildCookieHeader(AUTH0_CONNECTION_COOKIE, session.connection ?? "", maxAge));
-
-  return response;
-}
-
-export function clearAuth0SessionCookies(response: Response) {
-  for (const name of [
-    AUTH0_ACCESS_COOKIE,
-    AUTH0_ID_COOKIE,
-    AUTH0_EXPIRES_COOKIE,
-    AUTH0_PROVIDER_COOKIE,
-    AUTH0_CONNECTION_COOKIE,
-  ]) {
-    response.headers.append("Set-Cookie", buildCookieHeader(name, "", 0));
-  }
-
-  return response;
-}
-
-export async function requireAuth0Session() {
-  const session = await readAuth0SessionFromCookies();
-  if (!session) {
-    throw new Error("Auth0 session missing");
-  }
-  return session;
 }

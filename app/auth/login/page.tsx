@@ -1,9 +1,11 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/ui/button";
+import { getBrowserSupabaseClient } from "@/lib/supabase/client";
+import { extractAuthErrorMessage, isSupabaseUserMissingError } from "@/lib/auth/errors";
 
 const providers = [
   { id: "discord" as const, label: "Sign in with Discord" },
@@ -25,9 +27,10 @@ function LoginPageContent() {
   const destination = searchParams.get("redirect") ?? "/profile";
   const errorCode = searchParams.get("error");
   const router = useRouter();
+  const supabase = useMemo(() => getBrowserSupabaseClient(), []);
   const [loading, setLoading] = useState<ProviderId | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const resolvedError = mapAuthErrorCode(errorCode);
+  const resolvedError = useMemo(() => mapAuthErrorCode(errorCode), [errorCode]);
 
   useEffect(() => {
     if (resolvedError) {
@@ -36,35 +39,23 @@ function LoginPageContent() {
   }, [resolvedError]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadSession() {
-      try {
-        const response = await fetch("/api/auth/session", {
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          console.error("Failed to load auth session", response.status, response.statusText);
-          return;
-        }
-
-        const payload: { authenticated: boolean } = await response.json();
-
-        if (!cancelled && payload.authenticated) {
-          router.replace(destination);
-        }
-      } catch (cause) {
-        console.error("Failed to load auth session", cause);
+    void supabase.auth.getSession().then(async ({ data, error }) => {
+      if (isSupabaseUserMissingError(error)) {
+        await supabase.auth.signOut();
+        return;
       }
-    }
 
-    void loadSession();
+      if (error) {
+        console.error("Failed to load session", error);
+        setError(extractAuthErrorMessage(error));
+        return;
+      }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [destination, router]);
+      if (data.session) {
+        router.replace(destination);
+      }
+    });
+  }, [destination, router, supabase]);
 
   const handleSignIn = useCallback(
     async (provider: ProviderId) => {
@@ -101,7 +92,7 @@ function LoginPageContent() {
       </div>
 
       <p className="rounded-lg bg-neutral-50 p-4 text-xs text-neutral-600">
-        You&apos;ll be redirected back here after authentication. Make sure pop-up or redirect blockers are disabled while signing in.
+        You&apos;ll be redirected back here after authentication. If Roblox sign-in fails, confirm the Supabase OAuth provider is configured correctly in your project settings.
       </p>
 
       {error ? (
@@ -142,11 +133,7 @@ function mapAuthErrorCode(code: string | null): string | null {
     case "auth0_token_missing":
       return "Roblox sign-in failed while exchanging credentials. Please retry in a moment.";
     case "auth0_sign_in_failed":
-      return "We couldn't complete your Roblox session. Please ensure the account isn't already linked.";
-    case "auth0_missing_params":
-      return "The Roblox login response was incomplete. Please try again.";
-    case "auth0_invalid_token":
-      return "We couldn't validate the Roblox login response. Please start the sign-in process again.";
+      return "We couldn't create your Roblox session. Please ensure the account isn't already linked.";
     default:
       return null;
   }
