@@ -79,7 +79,7 @@ export async function GET(request: Request) {
     value: sessionPayload,
     httpOnly: true,
     sameSite: "lax",
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     maxAge: AUTH0_PKCE_MAX_AGE,
     path: "/",
   });

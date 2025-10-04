@@ -1,35 +1,33 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { createSupabaseMiddlewareClient } from "@/lib/supabase/middleware";
+import { clearAuth0SessionCookies, readAuth0SessionFromRequest } from "@/lib/auth/session";
 
 const AUTH_ROUTE = "/auth/login";
 const PROTECTED_PREFIXES = ["/profile", "/owner", "/staff"];
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createSupabaseMiddlewareClient(req, res);
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
   const requiresAuth = PROTECTED_PREFIXES.some((prefix) =>
     req.nextUrl.pathname.startsWith(prefix),
   );
 
-  if (!session && requiresAuth) {
+  if (!requiresAuth) {
+    return NextResponse.next();
+  }
+
+  const session = await readAuth0SessionFromRequest(req);
+
+  if (!session) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = AUTH_ROUTE;
     redirectUrl.searchParams.set("redirect", req.nextUrl.pathname + req.nextUrl.search);
-    return NextResponse.redirect(redirectUrl);
+
+    const response = NextResponse.redirect(redirectUrl);
+    clearAuth0SessionCookies(response);
+    return response;
   }
 
-  if (!session) {
-    return res;
-  }
-
-  return res;
+  return NextResponse.next();
 }
 
 export const config = {
