@@ -1,15 +1,13 @@
 "use client";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 import type { Database } from "@/db/types/supabase";
 import { publicEnv } from "@/lib/env";
 
-const client = createClient<Database>(publicEnv.NEXT_PUBLIC_SUPABASE_URL, publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
+const client = createClientComponentClient<Database>({
+  supabaseUrl: publicEnv.NEXT_PUBLIC_SUPABASE_URL,
+  supabaseKey: publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 });
 
 export function getBrowserSupabaseClient() {

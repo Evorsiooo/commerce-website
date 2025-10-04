@@ -1,7 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { clearAuth0SessionCookies, readAuth0SessionFromRequest } from "@/lib/auth/session";
+import { clearAuth0SessionCookies } from "@/lib/auth/session";
+import { createSupabaseMiddlewareClient } from "@/lib/supabase/middleware";
 
 const AUTH_ROUTE = "/auth/login";
 const PROTECTED_PREFIXES = ["/profile", "/owner", "/staff"];
@@ -15,7 +16,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const session = await readAuth0SessionFromRequest(req);
+  const res = NextResponse.next();
+  const supabase = createSupabaseMiddlewareClient(req, res);
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
     const redirectUrl = req.nextUrl.clone();
@@ -27,7 +33,7 @@ export async function middleware(req: NextRequest) {
     return response;
   }
 
-  return NextResponse.next();
+  return res;
 }
 
 export const config = {
