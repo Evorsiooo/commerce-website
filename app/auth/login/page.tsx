@@ -124,16 +124,16 @@ function mapAuthErrorCode(code: string | null): string | null {
 
   switch (code) {
     case "auth0_not_configured":
-      return "Roblox authentication is temporarily unavailable. Please contact support.";
+      return "Authentication is temporarily unavailable. Please contact support.";
     case "auth0_session_expired":
       return "Your sign-in session expired. Please try again.";
     case "auth0_state_mismatch":
-      return "We couldn't verify your Roblox login. Please start the sign-in process again.";
+      return "We couldn't verify your login. Please start the sign-in process again.";
     case "auth0_token_exchange_failed":
     case "auth0_token_missing":
-      return "Roblox sign-in failed while exchanging credentials. Please retry in a moment.";
+  return "Sign-in failed while exchanging credentials. Please retry in a moment.";
     case "auth0_sign_in_failed":
-      return "We couldn't create your Roblox session. Please ensure the account isn't already linked.";
+  return "We couldn't create your session. Please ensure the account isn't already linked.";
     default:
       return null;
   }
