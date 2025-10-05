@@ -90,6 +90,7 @@
 - **Storybook/MDX cookbook** documents prop shapes. Keep it updated; add examples when introducing new component variants.
 - **CI Scaffold Smoke Test** runs `npm run scaffold:page` on a sample route plus lint/typecheck. Do not merge changes that break the smoke test.
 - **Auth Status Machine** (`profiles.account_status`) must reflect authentication state. Any auth change should include state machine review.
+- **Auth0 session bridge** requires `SUPABASE_SERVICE_ROLE_KEY` in every server environment; the callback will abort if it’s missing. Lock this secret down and verify it exists before deploying.
 
 ---
 
