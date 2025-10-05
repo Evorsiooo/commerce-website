@@ -4,7 +4,7 @@ Phase 1 delivers the foundation for the Roblox Ro-State Commerce Office portal: 
 
 ### Prerequisites
 
-- Supabase project with Auth0 custom OIDC provider configured (slug should match `SUPABASE_AUTH0_PROVIDER_ID`, defaults to `auth0`)
+- Supabase project with Auth0 provider configured (Discord now flows through Auth0). The repo ships a helper script – run `npm run supabase:configure-auth0` after supplying the Supabase service role key and Auth0 credentials.
 - Auth0 tenant with Roblox + Discord social connections
 - Node.js 20+
 - Supabase CLI (`npm install -g supabase`)
@@ -25,6 +25,7 @@ npm run lint         # ESLint against the whole project
 npm run typecheck    # TypeScript project-wide check
 npm test             # Vitest unit suite
 npm run supabase:types  # Regenerate Supabase database types (after supabase link)
+npm run supabase:configure-auth0  # Upsert the Supabase Auth0 OIDC provider via API
 ```
 
 ### Directory highlights

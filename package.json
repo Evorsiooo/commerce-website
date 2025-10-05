@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "supabase:types": "supabase gen types typescript --linked --schema public > db/types/supabase.ts",
-    "scaffold:page": "node ./scripts/scaffold-page.mjs"
+    "scaffold:page": "node ./scripts/scaffold-page.mjs",
+    "supabase:configure-auth0": "node ./scripts/configure-auth0-provider.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

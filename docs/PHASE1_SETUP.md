@@ -5,9 +5,9 @@ This guide lists the manual tasks required to bring the Phase 1 foundation onlin
 ## 1. Provision Supabase
 
 1. Create a new Supabase project (US East preferred) and note the **Project Reference**.
-2. In **Authentication → Providers**:
-   - Enable **Auth0** as a custom OIDC provider and set the redirect URL to `https://<project-ref>.supabase.co/auth/v1/callback`. Name the provider slug `auth0` (or adjust `SUPABASE_AUTH0_PROVIDER_ID` in the app env if you choose a different slug).
-   - Disable Supabase's built-in Discord provider. Discord now authenticates through Auth0 alongside Roblox, so Supabase only needs the Auth0 provider enabled.
+2. Configure the Auth0 custom OIDC provider:
+   - Export the Supabase service role key and Auth0 credentials in your shell and run `npm run supabase:configure-auth0`. The script ensures a provider with slug `auth0` exists and points to your Auth0 tenant.
+   - Alternatively, you can perform the same steps manually in **Authentication → Providers** by creating an **Auth0 / Custom OIDC** entry with the redirect URL `https://<project-ref>.supabase.co/auth/v1/callback` and disabling Supabase's built-in Discord provider.
 3. In **Authentication → URL Configuration**, set the site URL to your Vercel deployment (or `http://localhost:3000` for development).
 4. In **Storage → Buckets**, create buckets for `business-logos`, `property-photos`, and `audit-attachments`. Leave them private for now.
 5. Open the SQL editor and run `db/migrations/0001_initial_schema.sql` to seed enums, tables, and RLS policies.
@@ -33,12 +33,11 @@ This guide lists the manual tasks required to bring the Phase 1 foundation onlin
 2. Fill each variable:
    - `NEXT_PUBLIC_SUPABASE_URL` – From Supabase project settings.
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` – Supabase anon key.
-   - `SUPABASE_SERVICE_ROLE_KEY` – Service role key (used for migrations/seed scripts only, never exposed to the browser).
+   - `SUPABASE_SERVICE_ROLE_KEY` – Service role key (used for migrations, the Auth0 provider automation script, and never exposed to the browser).
    - `SUPABASE_PROJECT_REF` – Supabase project reference (needed for the type generator script).
    - `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` – From Auth0 application.
    - `DISCORD_WEBHOOK_URL` – Optional, for notifications.
    - `AUTH0_ROBLOX_CONNECTION`, `AUTH0_DISCORD_CONNECTION` – Exact Auth0 connection names for Roblox and Discord social logins (fallback to `AUTH0_CONNECTION` for Roblox if present).
-   - `SUPABASE_AUTH0_PROVIDER_ID` – Supabase Auth → Providers slug for the Auth0 custom OIDC provider (defaults to `auth0`).
 3. Restart the dev server after editing env values.
 
 ## 5. Generate Types & Run Checks

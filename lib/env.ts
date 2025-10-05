@@ -18,12 +18,10 @@ const serverSchema = z
     AUTH0_CONNECTION: z.string().min(1).optional(),
     AUTH0_DISCORD_CONNECTION: z.string().min(1).optional(),
     AUTH0_ROBLOX_CONNECTION: z.string().min(1).optional(),
-    SUPABASE_AUTH0_PROVIDER_ID: z.string().min(1).optional(),
   })
   .transform((env) => ({
     ...env,
     NEXT_PUBLIC_SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, ""),
-    SUPABASE_AUTH0_PROVIDER_ID: env.SUPABASE_AUTH0_PROVIDER_ID ?? "auth0",
   }));
 
 const fallbackForTests = {
@@ -50,7 +48,6 @@ const runtimeEnv = {
   AUTH0_CONNECTION: typeof process !== "undefined" ? process.env.AUTH0_CONNECTION : undefined,
   AUTH0_DISCORD_CONNECTION: typeof process !== "undefined" ? process.env.AUTH0_DISCORD_CONNECTION : undefined,
   AUTH0_ROBLOX_CONNECTION: typeof process !== "undefined" ? process.env.AUTH0_ROBLOX_CONNECTION : undefined,
-  SUPABASE_AUTH0_PROVIDER_ID: typeof process !== "undefined" ? process.env.SUPABASE_AUTH0_PROVIDER_ID : undefined,
 } satisfies Record<string, string | undefined>;
 
 const parsed = serverSchema.safeParse(runtimeEnv);
