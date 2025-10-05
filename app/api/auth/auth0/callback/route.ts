@@ -97,10 +97,13 @@ export async function GET(request: Request) {
     supabaseKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   });
 
+  const supabaseProviderId = config.supabaseProviderId ?? "auth0";
+
   const { error } = await supabase.auth.signInWithIdToken({
-    provider: "auth0",
+    provider: "oidc",
     token: tokens.id_token,
     access_token: tokens.access_token,
+    provider_id: supabaseProviderId,
   } as never);
 
   if (error) {
@@ -108,6 +111,7 @@ export async function GET(request: Request) {
       error,
       provider: sessionData.provider,
       connection: sessionData.connection,
+      supabaseProviderId,
     });
     return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_sign_in_failed"));
   }

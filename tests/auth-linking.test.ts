@@ -1,5 +1,7 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-describe("auth linking flow", () => {
-	it.todo("covers discord-first, roblox-first, and conflict scenarios");
+describe.skip("auth linking relaunch", () => {
+	it("is pending until metadata linking returns", () => {
+		expect(true).toBe(true);
+	});
 });

@@ -4,7 +4,7 @@ Phase 1 delivers the foundation for the Roblox Ro-State Commerce Office portal: 
 
 ### Prerequisites
 
-- Supabase project with Auth0 provider configured (Discord now flows through Auth0)
+- Supabase project with Auth0 custom OIDC provider configured (slug should match `SUPABASE_AUTH0_PROVIDER_ID`, defaults to `auth0`)
 - Auth0 tenant with Roblox + Discord social connections
 - Node.js 20+
 - Supabase CLI (`npm install -g supabase`)

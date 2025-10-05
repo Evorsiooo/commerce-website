@@ -6,7 +6,7 @@ This guide lists the manual tasks required to bring the Phase 1 foundation onlin
 
 1. Create a new Supabase project (US East preferred) and note the **Project Reference**.
 2. In **Authentication → Providers**:
-   - Enable **Auth0** with your unified OAuth broker and set the redirect URL to `https://<project-ref>.supabase.co/auth/v1/callback`.
+   - Enable **Auth0** as a custom OIDC provider and set the redirect URL to `https://<project-ref>.supabase.co/auth/v1/callback`. Name the provider slug `auth0` (or adjust `SUPABASE_AUTH0_PROVIDER_ID` in the app env if you choose a different slug).
    - Disable Supabase's built-in Discord provider. Discord now authenticates through Auth0 alongside Roblox, so Supabase only needs the Auth0 provider enabled.
 3. In **Authentication → URL Configuration**, set the site URL to your Vercel deployment (or `http://localhost:3000` for development).
 4. In **Storage → Buckets**, create buckets for `business-logos`, `property-photos`, and `audit-attachments`. Leave them private for now.
@@ -38,8 +38,8 @@ This guide lists the manual tasks required to bring the Phase 1 foundation onlin
    - `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` – From Auth0 application.
    - `DISCORD_WEBHOOK_URL` – Optional, for notifications.
    - `AUTH0_ROBLOX_CONNECTION`, `AUTH0_DISCORD_CONNECTION` – Exact Auth0 connection names for Roblox and Discord social logins (fallback to `AUTH0_CONNECTION` for Roblox if present).
+   - `SUPABASE_AUTH0_PROVIDER_ID` – Supabase Auth → Providers slug for the Auth0 custom OIDC provider (defaults to `auth0`).
 3. Restart the dev server after editing env values.
-4. The server runtime halts immediately if any required variable is missing or malformed; client bundles now surface validation errors as console warnings instead of hard crashes, so always check server logs first when troubleshooting.
 
 ## 5. Generate Types & Run Checks
 

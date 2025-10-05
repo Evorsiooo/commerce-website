@@ -13,6 +13,7 @@ export type Auth0PkceSession = {
 export const AUTH0_PKCE_COOKIE = "auth0_pkce";
 export const AUTH0_PKCE_MAX_AGE = 60 * 5; // five minutes
 export const AUTH0_SCOPE = "openid profile email";
+export const AUTH0_SUPABASE_PROVIDER_ID = env.SUPABASE_AUTH0_PROVIDER_ID;
 
 export function getAuth0Config() {
   const domain = env.AUTH0_DOMAIN;
@@ -38,6 +39,7 @@ export function getAuth0Config() {
       roblox: defaultConnection?.trim() ?? undefined,
       discord: discordConnection?.trim() ?? undefined,
     },
+    supabaseProviderId: env.SUPABASE_AUTH0_PROVIDER_ID,
   };
 }
 
