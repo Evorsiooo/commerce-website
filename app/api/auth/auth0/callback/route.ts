@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
@@ -7,121 +9,46 @@ import type { Database } from "@/db/types/supabase";
 import { env } from "@/lib/env";
 import { AUTH0_PKCE_COOKIE, decodePkceSession, getAuth0Config } from "@/lib/auth/auth0";
 
+type Auth0IdTokenClaims = {
+  sub: string;
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
+  nickname?: string;
+  picture?: string;
+};
+
 function buildErrorRedirect(origin: string, code: string) {
   const url = new URL("/auth/login", origin);
   url.searchParams.set("error", code);
   return url;
 }
 
-type Auth0IdTokenClaims = {
-  sub?: string;
-  email?: string;
-  email_verified?: boolean;
-  name?: string;
-  nickname?: string;
-  picture?: string;
-  given_name?: string;
-  family_name?: string;
-  [key: string]: unknown;
-};
-
-function decodeAuth0IdToken(token: string): Auth0IdTokenClaims {
-  const parts = token.split(".");
-
-  if (parts.length < 2) {
-    throw new Error("Invalid Auth0 id_token");
+function decodeJwt<T>(token: string): T {
+  const segments = token.split(".");
+  if (segments.length !== 3) {
+    throw new Error("Invalid JWT format");
   }
 
-  const payloadSegment = parts[1];
-  const normalized = payloadSegment.replace(/-/g, "+").replace(/_/g, "/");
+  const payload = segments[1];
+  const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
   const decoded = Buffer.from(padded, "base64").toString("utf8");
-
-  try {
-    const parsed = JSON.parse(decoded) as Auth0IdTokenClaims;
-    return parsed;
-  } catch (error) {
-    console.error("Failed to parse Auth0 id_token payload", error);
-    throw new Error("Invalid Auth0 id_token payload");
-  }
+  return JSON.parse(decoded) as T;
 }
 
-function resolveAuth0Email(claims: Auth0IdTokenClaims, provider: string | null | undefined) {
-  const claimedEmail = typeof claims.email === "string" ? claims.email.trim() : "";
-  if (claimedEmail.includes("@")) {
-    return claimedEmail.toLowerCase();
-  }
-
-  const sub = typeof claims.sub === "string" ? claims.sub : null;
-  if (!sub) {
-    return null;
-  }
-
-  const sanitizedSub = sub.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-  const sanitizedProvider = provider?.trim().toLowerCase() || "auth0";
-  return `${sanitizedSub}@${sanitizedProvider}.internal.auth`; // deterministic synthetic email
+function sanitizeEmail(input: string) {
+  return input.trim().toLowerCase();
 }
 
-function buildUserMetadata(
-  claims: Auth0IdTokenClaims,
-  provider: string | null | undefined,
-  connection: string | null | undefined,
-) {
-  const metadata: Record<string, unknown> = {
-    auth_provider: provider ?? "auth0",
-  };
-
-  if (connection) {
-    metadata.auth_connection = connection;
-  }
-
-  if (claims.sub) {
-    metadata.auth0_sub = claims.sub;
-  }
-
-  if (claims.email) {
-    metadata.auth0_email = claims.email;
-  }
-
-  if (typeof claims.email_verified === "boolean") {
-    metadata.auth0_email_verified = claims.email_verified;
-  }
-
-  if (claims.name) {
-    metadata.auth0_name = claims.name;
-  }
-
-  if (claims.picture) {
-    metadata.auth0_picture = claims.picture;
-  }
-
-  if (claims.nickname) {
-    metadata.auth0_nickname = claims.nickname;
-  }
-
-  if (claims.given_name) {
-    metadata.auth0_given_name = claims.given_name;
-  }
-
-  if (claims.family_name) {
-    metadata.auth0_family_name = claims.family_name;
-  }
-
-  return metadata;
+function fallbackEmailFromSub(sub: string, provider: string | null) {
+  const sanitizedSub = sub.replace(/[^a-zA-Z0-9]+/g, "-");
+  const suffix = provider ? provider.replace(/[^a-zA-Z0-9]+/g, "-") : "auth0";
+  return `${sanitizedSub}@${suffix}.auth.hccommerce`;
 }
 
-function extractMagicLinkToken(actionLink: string | null | undefined) {
-  if (!actionLink) {
-    return null;
-  }
-
-  try {
-    const url = new URL(actionLink);
-    return url.searchParams.get("token");
-  } catch (error) {
-    console.error("Failed to parse Supabase action link token", { actionLink, error });
-    return null;
-  }
+function derivePassword(sub: string, secret: string) {
+  return crypto.createHmac("sha256", secret).update(sub).digest("hex");
 }
 
 export async function GET(request: Request) {
@@ -204,85 +131,94 @@ export async function GET(request: Request) {
     return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_token_missing"));
   }
 
-  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!serviceRoleKey) {
-    console.error("Supabase service role key is required for Auth0 login");
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("Supabase service role key missing for Auth0 bridge");
     return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "supabase_service_role_missing"));
   }
 
-  const auth0Claims = decodeAuth0IdToken(tokens.id_token);
-  const normalizedEmail = resolveAuth0Email(auth0Claims, sessionData.provider);
-
-  if (!normalizedEmail) {
-    console.error("Failed to derive email from Auth0 id_token", {
-      claims: auth0Claims,
-      provider: sessionData.provider,
-      connection: sessionData.connection,
-    });
-    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_email_missing"));
+  let claims: Auth0IdTokenClaims;
+  try {
+    claims = decodeJwt<Auth0IdTokenClaims>(tokens.id_token);
+  } catch (error) {
+    console.error("Failed to decode Auth0 ID token", error);
+    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_token_invalid"));
   }
 
-  const supabaseAdmin = createClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, serviceRoleKey, {
+  if (!claims?.sub) {
+    console.error("Auth0 ID token missing subject", claims);
+    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "auth0_token_invalid"));
+  }
+
+  const derivedPassword = derivePassword(claims.sub, env.SUPABASE_SERVICE_ROLE_KEY);
+  const resolvedEmail = sanitizeEmail(
+    claims.email && claims.email.length > 0
+      ? claims.email
+      : fallbackEmailFromSub(claims.sub, sessionData.provider ?? sessionData.connection ?? null),
+  );
+  const displayName = claims.name ?? claims.nickname ?? null;
+
+  const supabaseAdmin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
 
-  const userMetadataPatch = buildUserMetadata(auth0Claims, sessionData.provider, sessionData.connection);
+  let existingUserId: string | null = null;
+  try {
+    const { data: existingUser, error: lookupError } = await supabaseAdmin
+      .from("auth.users")
+      .select("id")
+      .eq("email", resolvedEmail)
+      .maybeSingle();
 
-  const linkResult = await supabaseAdmin.auth.admin.generateLink({
-    type: "magiclink",
-    email: normalizedEmail,
-    options: {
-      data: userMetadataPatch,
-    },
-  });
+    if (lookupError) {
+      throw lookupError;
+    }
 
-  if (linkResult.error || !linkResult.data?.properties) {
-    console.error("Supabase magic link generation failed", {
-      error: linkResult.error,
-      provider: sessionData.provider,
-      connection: sessionData.connection,
-    });
-    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "supabase_magiclink_failed"));
+    existingUserId = existingUser?.id ?? null;
+  } catch (error) {
+    console.error("Failed to lookup Supabase user", error);
+    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "supabase_lookup_failed"));
   }
 
-  const { properties, user: generatedUser } = linkResult.data;
-  const emailOtp = properties.email_otp ?? null;
-  const magicToken = extractMagicLinkToken(properties.action_link ?? null);
-  const verificationToken = emailOtp ?? magicToken;
-  const verificationType = emailOtp ? "email" : ("magiclink" as const);
+  const userMetadata = {
+    auth0_sub: claims.sub,
+    auth0_provider: sessionData.provider ?? null,
+    auth0_connection: sessionData.connection ?? null,
+    name: displayName,
+    picture: claims.picture ?? null,
+    email_verified: claims.email_verified ?? null,
+  } satisfies Record<string, unknown>;
 
-  if (!verificationToken) {
-    console.error("Supabase magic link payload missing token", {
-      provider: sessionData.provider,
-      connection: sessionData.connection,
+  if (!existingUserId) {
+    const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: resolvedEmail,
+      email_confirm: true,
+      password: derivedPassword,
+      user_metadata: userMetadata,
+      app_metadata: {
+        providers: ["auth0"],
+      },
     });
-    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "supabase_magiclink_missing_token"));
-  }
 
-  if (generatedUser?.id) {
-    const mergedMetadata = {
-      ...(generatedUser.user_metadata ?? {}),
-      ...userMetadataPatch,
-    };
+    if (createError) {
+      console.error("Failed to create Supabase user for Auth0 login", createError);
+      return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "supabase_user_create_failed"));
+    }
+  } else {
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUserId, {
+      email: resolvedEmail,
+      email_confirm: true,
+      password: derivedPassword,
+      user_metadata: userMetadata,
+    });
 
-    if (Object.keys(mergedMetadata).length > 0) {
-      const updateResult = await supabaseAdmin.auth.admin.updateUserById(generatedUser.id, {
-        email_confirm: true,
-        user_metadata: mergedMetadata,
+    if (updateError) {
+      console.error("Failed to update Supabase user for Auth0 login", updateError, {
+        userId: existingUserId,
       });
-
-      if (updateResult.error) {
-        console.error("Supabase user metadata update failed", {
-          error: updateResult.error,
-          provider: sessionData.provider,
-          connection: sessionData.connection,
-          userId: generatedUser.id,
-        });
-      }
+      return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "supabase_user_update_failed"));
     }
   }
 
@@ -291,19 +227,18 @@ export async function GET(request: Request) {
     supabaseKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   });
 
-  const otpResponse = await supabase.auth.verifyOtp({
-    email: normalizedEmail,
-    token: verificationToken,
-    type: verificationType,
+  const { error } = await supabase.auth.signInWithPassword({
+    email: resolvedEmail,
+    password: derivedPassword,
   });
 
-  if (otpResponse.error || !otpResponse.data.session) {
-    console.error("Supabase email OTP verification failed", {
-      error: otpResponse.error,
+  if (error) {
+    console.error("Supabase password sign-in failed after Auth0 callback", {
+      error,
       provider: sessionData.provider,
       connection: sessionData.connection,
     });
-    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "supabase_email_verify_failed"));
+    return NextResponse.redirect(buildErrorRedirect(requestUrl.origin, "supabase_sign_in_failed"));
   }
 
   const redirectUrl = new URL(sessionData.redirect || "/profile", requestUrl.origin);

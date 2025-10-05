@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, it, expect } from "vitest";
 
-describe("auth linking relaunch placeholder", () => {
-	it("marks the legacy linking suite as intentionally disabled", () => {
+describe("auth linking placeholder", () => {
+	it("is temporarily disabled during relaunch", () => {
 		expect(true).toBe(true);
 	});
 });

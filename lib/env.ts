@@ -4,7 +4,7 @@ const serverSchema = z
   .object({
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
     SUPABASE_PROJECT_REF: z
       .string()
       .min(1)
@@ -38,7 +38,10 @@ const runtimeEnv = {
     typeof process !== "undefined"
       ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
       : fallbackForTests.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  SUPABASE_SERVICE_ROLE_KEY: typeof process !== "undefined" ? process.env.SUPABASE_SERVICE_ROLE_KEY : undefined,
+  SUPABASE_SERVICE_ROLE_KEY:
+    typeof process !== "undefined"
+      ? process.env.SUPABASE_SERVICE_ROLE_KEY ?? (process.env.NODE_ENV === "test" ? "test-service-role-key" : undefined)
+      : undefined,
   SUPABASE_PROJECT_REF: typeof process !== "undefined" ? process.env.SUPABASE_PROJECT_REF : undefined,
   DISCORD_WEBHOOK_URL: typeof process !== "undefined" ? process.env.DISCORD_WEBHOOK_URL : undefined,
   AUTH0_DOMAIN: typeof process !== "undefined" ? process.env.AUTH0_DOMAIN : undefined,

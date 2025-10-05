@@ -33,7 +33,7 @@ This guide lists the manual tasks required to bring the Phase 1 foundation onlin
 2. Fill each variable:
    - `NEXT_PUBLIC_SUPABASE_URL` – From Supabase project settings.
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` – Supabase anon key.
-   - `SUPABASE_SERVICE_ROLE_KEY` – Service role key (required for the Auth0 → Supabase session bridge; keep this server-side only and never expose it to the browser).
+   - `SUPABASE_SERVICE_ROLE_KEY` – Service role key (needed for migrations **and** the server-side Auth0→Supabase session bridge; never expose it to the browser).
    - `SUPABASE_PROJECT_REF` – Supabase project reference (needed for the type generator script).
    - `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` – From Auth0 application.
    - `DISCORD_WEBHOOK_URL` – Optional, for notifications.
@@ -59,11 +59,10 @@ This guide lists the manual tasks required to bring the Phase 1 foundation onlin
 ## 6. First-Time Login Flow Smoke Test
 
 1. Start the dev server: `npm run dev`.
-2. Visit `http://localhost:3000` and sign in with either provider. Both Roblox and Discord now authenticate through Auth0 and should redirect back to the portal without errors.
-3. Open Supabase → Authentication → Users and confirm:
-   - A single user record exists for the deterministic email produced by Auth0.
-   - The user’s metadata includes `auth_provider` and `auth0_sub` fields reflecting the Auth0 identity.
-4. Check the portal profile page to ensure the session is active and the user context loads without forcing a secondary linking step.
+2. Visit `http://localhost:3000` and click **Sign in with Discord**. Approve the request.
+3. After returning to the portal, follow the prompt to link your Roblox account (Auth0).
+4. Confirm the profile page shows both providers as **Linked**.
+5. Check Supabase → Authentication → Users to confirm the identities list contains both `discord` and `auth0` providers.
 
 ---
 

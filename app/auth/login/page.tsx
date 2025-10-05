@@ -132,6 +132,17 @@ function mapAuthErrorCode(code: string | null): string | null {
     case "auth0_token_exchange_failed":
     case "auth0_token_missing":
       return "Roblox sign-in failed while exchanging credentials. Please retry in a moment.";
+    case "auth0_token_invalid":
+      return "We couldn't validate the login response. Please retry the sign-in flow.";
+    case "supabase_service_role_missing":
+      return "Portal configuration is incomplete. Please notify an administrator to add the Supabase service role key.";
+    case "supabase_lookup_failed":
+      return "We couldn't prepare your Supabase account. Please try again in a minute.";
+    case "supabase_user_create_failed":
+    case "supabase_user_update_failed":
+      return "We couldn't sync your account with Supabase. Please reach out to support.";
+    case "supabase_sign_in_failed":
+      return "We couldn't establish your Supabase session. Please retry; if the issue continues, contact support.";
     case "auth0_sign_in_failed":
       return "We couldn't create your Roblox session. Please ensure the account isn't already linked.";
     default:
