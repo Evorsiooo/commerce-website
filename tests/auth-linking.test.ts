@@ -1,7 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 
-describe("auth linking placeholder", () => {
-	it("is temporarily disabled during relaunch", () => {
-		expect(true).toBe(true);
-	});
+describe("auth linking flow", () => {
+	it.todo("covers discord-first, roblox-first, and conflict scenarios");
 });

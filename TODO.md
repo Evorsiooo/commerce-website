@@ -36,7 +36,7 @@ These TODOs mirror the master plan and give us a quick checklist for implementat
 ## Phase 4 — Staff Review & Governance
 - [ ] Staff dashboards segmented by bureau (Licensing & Permits, Property Management, Compliance)
 - [ ] Application review page with approve/reject/return/request-edit actions + audit trail display
-- [ ] Approvals create/update canonical business records, trigger audit events, and fire Discord webhooks 
+- [ ] Approvals create/update canonical business records, trigger audit events, and fire Discord webhooks
 - [ ] Public tipline triage view for Compliance bureau
 - [ ] Monthly compliance inspection scheduler triggers reviews for each business on every founding anniversary month
 - [ ] Activity proof workspace lets businesses upload screenshots, link documents, and maintain ongoing evidence of operations

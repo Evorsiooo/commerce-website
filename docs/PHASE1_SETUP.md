@@ -33,12 +33,13 @@ This guide lists the manual tasks required to bring the Phase 1 foundation onlin
 2. Fill each variable:
    - `NEXT_PUBLIC_SUPABASE_URL` – From Supabase project settings.
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` – Supabase anon key.
-   - `SUPABASE_SERVICE_ROLE_KEY` – Service role key (needed for migrations **and** the server-side Auth0→Supabase session bridge; never expose it to the browser).
+   - `SUPABASE_SERVICE_ROLE_KEY` – Service role key (used for migrations/seed scripts only, never exposed to the browser).
    - `SUPABASE_PROJECT_REF` – Supabase project reference (needed for the type generator script).
    - `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` – From Auth0 application.
    - `DISCORD_WEBHOOK_URL` – Optional, for notifications.
    - `AUTH0_ROBLOX_CONNECTION`, `AUTH0_DISCORD_CONNECTION` – Exact Auth0 connection names for Roblox and Discord social logins (fallback to `AUTH0_CONNECTION` for Roblox if present).
 3. Restart the dev server after editing env values.
+4. The server runtime halts immediately if any required variable is missing or malformed; client bundles now surface validation errors as console warnings instead of hard crashes, so always check server logs first when troubleshooting.
 
 ## 5. Generate Types & Run Checks
 
